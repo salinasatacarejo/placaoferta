@@ -25,7 +25,7 @@
       box-sizing:border-box;
       align-items:flex-start;
       flex-wrap: wrap;
-      background-color: #fddec0;
+      background-color: #8a222220;
     }
     @media(max-width:900px){ .wrap{flex-direction:column;} .editor-area{width:100%} }
 
@@ -119,44 +119,45 @@ transform: scaleY(1.15);
     }
 
     .rs{
-      font-family:'Roboto';
-      font-weight: 900;
-      
-      align-self:flex-end;
-      position:relative;
+font-family: 'SugoDisplay';
+    font-size: 42px;
+    align-self: flex-end;
+    margin-bottom: 60px;
+    position: relative;
+    left: -15px;
       
     }
 
     .big-value{
-      font-family:'Yatra One';
-      font-weight:900;
+      font-family:'SugoDisplay';
+      
       font-size:160px;
       line-height:0.85;
       color:#222;
       transform-origin:top;
       display:inline-block;
       margin-right:6px;
-      letter-spacing: 1px;
+      letter-spacing: 10px;
     }
 
     .centavos{
-      font-family:'Yatra One';
-      font-weight:900;
-      font-size:80px;
-      line-height:1;
-      align-self:flex-start;
-      margin-top:6px;
-      color:#222;
+font-family: 'SugoDisplay';
+    letter-spacing: 1px;
+    font-size: 80px;
+    line-height: 1;
+    align-self: flex-start;
+    margin-top: 6px;
+    color: #222;
     }
 
     .cada{
-      font-family:'Roboto';
-font-weight: bold;
-letter-spacing: -0.8px;
+      font-family:'SugoDisplay';
+
       text-transform: uppercase;
-      font-size:25px;
+      font-size:40px;
+letter-spacing: 1px;
       align-self:flex-end;
-      margin-bottom:-10px;
+      margin-bottom:65px;
       position: absolute;
       left: 270px;
       transition: left 0.3s ease, font-size 0.3s ease;
@@ -211,7 +212,7 @@ letter-spacing: -0.8px;
     textarea{resize:vertical}
     .row{display:flex;gap:8px}
     .half{flex:1}
-    button{padding:10px;border-radius:6px;border:none;background:#213966;color:#fff;font-weight:700;cursor:pointer}
+    button{padding:10px;border-radius:6px;border:none;background:#f00100;color:#fff;font-weight:700;cursor:pointer}
     .btn-ghost{background:#f3f4f6;color:#213966;border:1px solid #ddd}
     .small{font-size:12px;color:#666;margin-top:6px}
 
@@ -705,8 +706,8 @@ letter-spacing: -0.8px;
     <div id="popup-container">
       <h2>Selecione o Encarte</h2>
       <div class="popup-options-grid">
-<button type="button" class="popup-btn-option" style="background-image: url('capa-encarte semanal.png'); --thumb: url('miniatura-oferta.png'); background-color: #f3f4f6;" onclick="selecionarOpcaoCartaz('ENCARTE SEMANAL')"></button>
-<button type="button" class="popup-btn-option" style="background-image: url('capa-preço avulso.png'); --thumb: url('miniatura-normal.png'); background-color: #f3f4f6;" onclick="selecionarOpcaoCartaz('PREÇO AVULSO')"></button>
+<button type="button" class="popup-btn-option" style="background-image: url('capa-encarte semanal.png'); --thumb: url('miniatura-oferta.png'); background-color: #f3f4f6;" onclick="selecionarOpcaoCartaz('PREÇO OFERTA')"></button>
+<button type="button" class="popup-btn-option" style="background-image: url('capa-preço avulso.png'); --thumb: url('miniatura-normal.png'); background-color: #f3f4f6;" onclick="selecionarOpcaoCartaz('PREÇO NORMAL')"></button>
 <button type="button" class="popup-btn-option" style="background-image: url('capa-ofertadia.png'); --thumb: url('miniatura-ofertadia.png'); background-color: #f3f4f6;" onclick="selecionarOpcaoCartaz('OFERTA DO DIA')"></button>
 </div>
 </div>
@@ -823,8 +824,8 @@ letter-spacing: -0.8px;
           </div>
         </div>
         <div style="margin-top: 10px; display: flex; gap: 8px;">
-          <button id="save-cartaz1" style="flex: 1; background:#4a90e2;">💾 Salvar Cartaz 1</button>
-          <button id="save-image-cartaz1" style="flex: 1; background:#2ecc71;">🖼️ Salvar com Imagem</button>
+<button id="save-cartaz1" style="flex: 1; background:#858181;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 1</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(Somente texto)</span></button>
+<button id="save-image-cartaz1" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 1</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
 
@@ -879,8 +880,8 @@ letter-spacing: -0.8px;
           </div>
         </div>
         <div style="margin-top: 10px; display: flex; gap: 8px;">
-          <button id="save-cartaz2" style="flex: 1; background:#4a90e2;">💾 Salvar Cartaz 2</button>
-          <button id="save-image-cartaz2" style="flex: 1; background:#2ecc71;">🖼️ Salvar com Imagem</button>
+<button id="save-cartaz2" style="flex: 1; background:#858181;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 2</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(Somente texto)</span></button>
+<button id="save-image-cartaz2" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 2</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
 
@@ -1042,11 +1043,11 @@ letter-spacing: -0.8px;
     }
     
     
-    // Altera a imagem de fundo caso seja PREÇO AVULSO
+    // Altera a imagem de fundo caso seja PREÇO NORMAL
     const cartazes = document.querySelectorAll('.cartaz');
 
     // Define a imagem baseada na opção escolhida e define o data-encarte
-    if (opcao === 'PREÇO AVULSO') {
+    if (opcao === 'PREÇO NORMAL') {
         cartazes.forEach(c => { c.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')"; c.setAttribute('data-encarte', opcao); });
     } else if (opcao === 'OFERTA DO DIA') {
         cartazes.forEach(c => { c.style.backgroundImage = "url('fundo-ofertadia.png')"; c.setAttribute('data-encarte', opcao); });
@@ -1177,8 +1178,8 @@ letter-spacing: -0.8px;
           </div>
         </div>
         <div style="margin-top: 10px; display: flex; gap: 8px;">
-          <button id="save-cartaz${id}" style="flex: 1; background:#4a90e2;">💾 Salvar Cartaz ${id}</button>
-          <button id="save-image-cartaz${id}" style="flex: 1; background:#2ecc71;">🖼️ Salvar com Imagem</button>
+<button id="save-cartaz${id}" style="flex: 1; background:#858181;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz ${id}</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(Somente texto)</span></button>
+<button id="save-image-cartaz${id}" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz ${id}</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
     `;
@@ -1193,7 +1194,7 @@ letter-spacing: -0.8px;
     const novoElementoCartaz = document.getElementById('cartaz' + id);
     novoElementoCartaz.setAttribute('data-encarte', encarteDoCartaz);
     
-    if (encarteDoCartaz === 'PREÇO AVULSO') {
+    if (encarteDoCartaz === 'PREÇO NORMAL') {
         novoElementoCartaz.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')";
     } else if (encarteDoCartaz === 'OFERTA DO DIA') {
         novoElementoCartaz.style.backgroundImage = "url('fundo-ofertadia.png')";
@@ -1337,10 +1338,10 @@ letter-spacing: -0.8px;
       cadaOutput.style.marginLeft = '';
         if (len > 4 && len <= 7) {
           cadaOutput.style.fontSize = '35px';
-          const deslocamento = Math.min((len - 4) * 10, 30);
+          const deslocamento = Math.min((len - 4) * 10, 20);
           cadaOutput.style.left = (270 - deslocamento) + 'px';
         } else {
-          cadaOutput.style.fontSize = '25px';
+          cadaOutput.style.fontSize = '40px';
           if (len > 7) {
             const deslocamento = 60;
             cadaOutput.style.left = (270 - deslocamento) + 'px';
@@ -1415,8 +1416,8 @@ if (isOfertaDoDia) {
         precoAntigoOutput.style.display = '';
         precoAntigoOutput.style.position = 'relative';
         precoAntigoOutput.style.color = '#ff0000'; // Exemplo: Vermelho ou a cor que desejar
-        precoAntigoOutput.style.fontFamily = 'Secular One';
-        precoAntigoOutput.style.fontSize = '28px';
+        precoAntigoOutput.style.fontFamily = 'SugoDisplay';
+        precoAntigoOutput.style.fontSize = '30px';
         precoAntigoOutput.style.margin = '5px 0';
         
         // Ajustes de posicionamento específicos da Oferta do Dia por dígitos
@@ -1434,8 +1435,8 @@ if (isOfertaDoDia) {
           precoAntigoOutput.style.right = '0px';
           
       precoAntigoOutput.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
-      precoAntigoOutput.style.top = '280px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '275px';
+      precoAntigoOutput.style.top = '285px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
         }
       } else {
         // BLOCO PARA CARTAZES NORMAIS
@@ -1443,24 +1444,24 @@ if (isOfertaDoDia) {
         precoAntigoOutput.style.display = '';
         precoAntigoOutput.style.position = 'relative';
         precoAntigoOutput.style.color = '#606060';
-        precoAntigoOutput.style.fontFamily = "'Secular One'";
-        precoAntigoOutput.style.fontSize = '20px';
+        precoAntigoOutput.style.fontFamily = 'SugoDisplay';
+        precoAntigoOutput.style.fontSize = '30px';
         precoAntigoOutput.style.margin = '6px 0 8px 0';
 
         // Nova condição para a quantidade de dígitos nos reais para cartazes normais
         if (charsLeftOfComma === 1) {
-          precoAntigoOutput.style.top = '280px';
+          precoAntigoOutput.style.top = '285px';
           precoAntigoOutput.style.right = '0px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '275px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
         } else if (charsLeftOfComma === 2) {
-          precoAntigoOutput.style.top = '280px';
+          precoAntigoOutput.style.top = '285px';
           precoAntigoOutput.style.right = '0px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '275px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
         } else {
-          precoAntigoOutput.style.top = '280px';
+          precoAntigoOutput.style.top = '285px';
           precoAntigoOutput.style.right = '0px';
           precoAntigoOutput.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '290px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '270px';
         }
       }
     }
@@ -1469,7 +1470,7 @@ if (isOfertaDoDia) {
     if (isOfertaDoDia) {
       document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '305px'; // Altura sem preço antigo na Oferta do Dia
     } else {
-      document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '320px';
+      document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '290px';
     }
   }
 
@@ -1490,25 +1491,23 @@ if (isOfertaDoDia) {
     // BLOCO EXCLUSIVO: OFERTA DO DIA (PREÇO PRINCIPAL)
     // ==========================================
     reaisOutput.style.letterSpacing = '1px';
-rsOutput.style.marginBottom = '-20px';
+
 
     reaisOutput.style.marginTop = '5px';
     centavosOutput.style.fontSize = '70px';
     if(stackEl) stackEl.style.marginTop = '5px';
-    rsOutput.style.left = '10px';
-    rsOutput.style.fontSize = '32px';
+
     reaisOutput.style.top = '170px';
 
     if ((parts.reais || '').length >= 3) {
-      reaisOutput.style.fontSize = '120px';
-      reaisOutput.style.transform = 'scaleY(1.6)';
+      reaisOutput.style.fontSize = '200px';
+      reaisOutput.style.transform = 'scaleY(1.2)';
+cadaOutput.style.marginBottom = '50px';
 
-rsOutput.style.marginBottom = '-40px';
 
-    rsOutput.style.fontSize = '25px';
     } else {
-      reaisOutput.style.fontSize = '160px';
-      reaisOutput.style.transform = 'scaleY(1.4)';
+      reaisOutput.style.fontSize = '260px';
+      reaisOutput.style.transform = 'scaleY(1)';
     }
   } else {
     // COMPORTAMENTO NORMAL ORIGINAL
@@ -1522,24 +1521,19 @@ rsOutput.style.marginBottom = '-40px';
     rsOutput.style.fontSize = '';
 
     if ((parts.reais || '').length >= 3) {
-      reaisOutput.style.fontSize = '120px';
-      reaisOutput.style.transform = 'scaleY(1.6)';
-    rsOutput.style.fontSize = '25px';
-    rsOutput.style.marginBottom = '-30px';
-    rsOutput.style.left= '1px';
+      reaisOutput.style.fontSize = '200px';
+      reaisOutput.style.transform = 'scaleY(1.2)';
+cadaOutput.style.marginBottom = '50px';
+
       
     } else if ((parts.reais || '').length === 2) {
-      reaisOutput.style.fontSize = '160px';
-      reaisOutput.style.transform = 'scaleY(1.4)';
-rsOutput.style.fontSize = '30px';
-    rsOutput.style.marginBottom = '10px';
-    rsOutput.style.left= '-15px';
+      reaisOutput.style.fontSize = '260px';
+      reaisOutput.style.transform = 'scaleY(1)';
+
     } else {
-      reaisOutput.style.fontSize = '160px';
-      reaisOutput.style.transform = 'scaleY(1.4)';
-rsOutput.style.fontSize = '30px';
-    rsOutput.style.marginBottom = '10px';
-    rsOutput.style.left= '-15px';
+      reaisOutput.style.fontSize = '260px';
+      reaisOutput.style.transform = 'scaleY(1)';
+
     }
   }
 
@@ -1553,7 +1547,7 @@ rsOutput.style.fontSize = '30px';
     if (dataInicialInput.value) {
       const di = dataInicialInput.value.split('-');
       rodapeOutput.textContent = `Aproveite! Oferta exclusiva para o dia ${di[2]}/${di[1]} ou enquanto durar o estoque`;
-      rodapeOutput.style.top ='515px';
+
     } else {
       rodapeOutput.textContent = ``;
     }
@@ -1897,53 +1891,25 @@ rsOutput.style.fontSize = '30px';
     {
       nome: "Projeto 2",
       config: {
-        apiKey: "AIzaSyC1Bi4bZ6JSyFEnw-uV9rzHoxdu1Oyhtk4",
-        authDomain: "placas-miramar-1.firebaseapp.com",
-        databaseURL: "https://placas-miramar-1-default-rtdb.firebaseio.com",
-        projectId: "placas-miramar-1",
-        storageBucket: "placas-miramar-1.firebasestorage.app",
-        messagingSenderId: "471001231253",
-        appId: "1:471001231253:web:e5493e27e6dd95bfb9509c",
-        measurementId: "G-3P1HKXGSDL"
+
       }
     },
     {
       nome: "Projeto 3",
       config: {
-  apiKey: "AIzaSyA8cQvVvppensR-CwvP6zBVpWWd-0mNY6Y",
-  authDomain: "salinas-ead30.firebaseapp.com",
-  databaseURL: "https://salinas-ead30-default-rtdb.firebaseio.com",
-  projectId: "salinas-ead30",
-  storageBucket: "salinas-ead30.firebasestorage.app",
-  messagingSenderId: "517926919844",
-  appId: "1:517926919844:web:35f2ea92d4749aaa841031",
-  measurementId: "G-HQ5DVQ2RXR"
+
       }
     },
     {
       nome: "Projeto 4",
       config: {
-        apiKey: "AIzaSyCEfHeoEbA0r5tgo37bo_faEhdYVN_WQh4",
-        authDomain: "placas-miramar-2.firebaseapp.com",
-        databaseURL: "https://placas-miramar-2-default-rtdb.firebaseio.com",
-        projectId: "placas-miramar-2",
-        storageBucket: "placas-miramar-2.firebasestorage.app",
-        messagingSenderId: "996269238406",
-        appId: "1:996269238406:web:930c973ead996aa2a10907",
-        measurementId: "G-QCEV1WG01E"
+
       }
     },
     {
       nome: "Projeto 5",
       config: {
-        apiKey: "AIzaSyAxvd9L6v9THk_H7iHpO2iXIJ7IybLGe-U",
-        authDomain: "placas-miramar-3.firebaseapp.com",
-        databaseURL: "https://placas-miramar-3-default-rtdb.firebaseio.com",
-        projectId: "placas-miramar-3",
-        storageBucket: "placas-miramar-3.firebasestorage.app",
-        messagingSenderId: "224576413037",
-        appId: "1:224576413037:web:1b52f29132dea240088e64",
-        measurementId: "G-PRFGPP5TN3"
+
       }
     },
   ];
