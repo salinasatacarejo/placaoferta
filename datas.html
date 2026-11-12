@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Visualizar e Editar Cartazes</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@800&family=Oswald:wght@400;700&family=Yatra+One&family=Righteous&family=Concert+One&family=Gidole&family=Londrina+Sketch&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Cal+Sans&family=Carter+One&family=Protest+Riot&family=Roboto:ital,wght@0,100..900;1,100..900&family=Secular+One&family=Yatra+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 
@@ -362,7 +362,8 @@
       top:170px;
       left: 10px;
       width: 100%;
-      font-family:'UturnaRoundBold';
+      font-family:'Roboto';
+    font-weight: 900;
       text-align:center;
       text-transform:uppercase;
       letter-spacing:1px;
@@ -381,7 +382,7 @@
 
     .preco-antigo{
       position: relative;
-      top:295px;
+      top:285px;
       right: 130px;
       color:#606060;
       font-family:'SugoDisplay';
@@ -458,8 +459,7 @@
     }
 
     @font-face {
-      font-family: 'UturnaRoundBold';
-      src: url('UturnaRoundBold.ttf') format('truetype');
+      font-family: 'Roboto';
       font-weight: normal;
       font-style: normal;
     }
@@ -542,7 +542,7 @@
     .cartaz.app-mode .cada { font-family: 'Baloo 2', sans-serif; text-transform: uppercase; font-size: 35px; letter-spacing: -1px; margin-top: -15px; margin-left: 30px; position: static; align-self: auto; left: auto; margin-bottom: 0; }
     .cartaz.app-mode .rodape { font-family: Arial, sans-serif; letter-spacing: -0.4px; position:absolute; bottom:-1px; left:10px; right:20px; font-size:14px; text-align:center; color:#222; font-weight: normal; }
     .cartaz.oferta-dia-mode { background-image: url('fundo-ofertadia.png'); }
-    .cartaz.oferta-dia-mode .descricao { color: #000000; top: 115px; font-family:'UturnaRoundBold'; }
+    .cartaz.oferta-dia-mode .descricao { color: #000000; top: 115px; font-family:'Roboto'; }
     .cartaz.oferta-dia-mode .preco-antigo { color: #313131 !important; }
     .cartaz.oferta-dia-mode .big-value, .cartaz.oferta-dia-mode .centavos, .cartaz.oferta-dia-mode .rs { color: #101010; }
 
@@ -2945,7 +2945,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
         cOut.textContent = parts.centavos;
 
         if (parts.reais.length >= 3) {
-          rOut.style.fontSize = '220px';
+          rOut.style.fontSize = '200px';
           rOut.style.transform = 'scaleY(1.2)';
         } else {
           rOut.style.fontSize = '260px';
@@ -2982,24 +2982,23 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
 
             pAntigoOut.style.display = '';
             pAntigoOut.style.position = 'relative';
-            pAntigoOut.style.top = '275px';
+            pAntigoOut.style.top = '285px';
             pAntigoOut.style.right = '0';
             pAntigoOut.style.color = '#606060';
-            pAntigoOut.style.fontFamily = "'SugoDisplay'";
+            pAntigoOut.style.fontFamily = 'SugoDisplay';
             pAntigoOut.style.fontSize = '30px';
             pAntigoOut.style.margin = '6px 0 8px 0';
 
             areaPreco.style.top = '260px';
           } else {
             pAntigoOut.innerHTML =
-              `DE <br> <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span><br> POR:`;
+              `DE <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span> POR:`;
 
             pAntigoOut.style.display = '';
             pAntigoOut.style.position = 'relative';
-            pAntigoOut.style.top = '295px';
+            pAntigoOut.style.top = '285px';
 
-            pAntigoOut.style.right =
-              charsLeftOfComma === 1 ? '130px' : '150px';
+            pAntigoOut.style.right = '0px';
 
             pAntigoOut.style.color = '';
             pAntigoOut.style.fontFamily = '';
@@ -3248,7 +3247,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                 `DE: <span style="font-size:25px;">R$ </span>${valorFormatadoAntes}`;
 
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '330px';
+              pAntigoOut.style.top = '285px';
               pAntigoOut.style.right = '0px';
               pAntigoOut.style.color = '#1a1a1ad1';
               pAntigoOut.style.fontFamily = "'Baloo 2'";
@@ -3261,7 +3260,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                 `DE: <span style="font-size:25px;">R$ </span>${valorFormatadoAntes}`;
 
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '330px';
+              pAntigoOut.style.top = '285px';
               pAntigoOut.style.right = '0px';
 
               areaPreco.style.top = '335px';
@@ -3273,7 +3272,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
             }
           } else if (isOfertaDoDia) {
             pAntigoOut.innerHTML =
-              `DE<br><span class="numeros-riscados">R$ ${valorFormatadoAntes}</span><br>POR:`;
+              `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
 
             pAntigoOut.style.color = '#ff0000';
             pAntigoOut.style.fontFamily = "'SugoDisplay'";
@@ -3281,11 +3280,11 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
             pAntigoOut.style.margin = '5px 0';
 
             if (charsLeftOfComma === 1 || charsLeftOfComma === 2) {
-              pAntigoOut.style.top = '250px';
-              pAntigoOut.style.right = '140px';
+              pAntigoOut.style.top = '285px';
+              pAntigoOut.style.right = '0px';
               areaPreco.style.top = '130px';
             } else {
-              pAntigoOut.style.top = '210px';
+              pAntigoOut.style.top = '285px';
               pAntigoOut.style.right = '0px';
               pAntigoOut.innerHTML =
                 `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
@@ -3586,7 +3585,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
           cOut.textContent = parts.centavos;
 
           if (parts.reais.length >= 3) {
-            rOut.style.fontSize = '220px';
+            rOut.style.fontSize = '200px';
             rOut.style.transform = 'scaleY(1.2)';
           } else {
             rOut.style.fontSize = '260px';
@@ -3607,24 +3606,24 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
               pAntigoOut.innerHTML = `DE R$ <span class="numeros-riscados">${valorFormatatedAntes}</span> POR:`;
               pAntigoOut.style.display = '';
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '275px';
+              pAntigoOut.style.top = '285px';
               pAntigoOut.style.right = '0';
               pAntigoOut.style.color = '#606060';
               pAntigoOut.style.fontFamily = "'SugoDisplay'";
               pAntigoOut.style.fontSize = '30px';
               pAntigoOut.style.margin = '6px 0 8px 0';
 
-              areaPreco.style.top = '260px';
+              areaPreco.style.top = '270px';
             } else {
-              pAntigoOut.innerHTML = `DE <br> <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span><br>  POR:`;   
+              pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span>  POR:`;   
               pAntigoOut.style.display = '';
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '295px';
+              pAntigoOut.style.top = '285px';
 
               if (charsLeftOfComma === 1) {
-                pAntigoOut.style.right = '130px';
+                pAntigoOut.style.right = '0px';
               } else {
-                pAntigoOut.style.right = '150px';
+                pAntigoOut.style.right = '0px';
               }
 
               pAntigoOut.style.color = '';
@@ -3632,7 +3631,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
               pAntigoOut.style.fontSize = '';
               pAntigoOut.style.margin = '6px 0 8px 0';
 
-              areaPreco.style.top = '190px'; //ajustado para novo formato antes:190*
+              areaPreco.style.top = '270px'; //ajustado para novo formato antes:190*
             }
           }
         } else {
@@ -3831,7 +3830,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                     if (charsLeftOfComma >= 3) {
                         pAntigoOut.innerHTML = `DE: <span style="font-size:30px;">R$ </span>${valorFormatadoAntes}`;
                         pAntigoOut.style.position = 'relative';
-                        pAntigoOut.style.top = '290px';  //ajustado para novo formato antes:315*
+                        pAntigoOut.style.top = '285px';  //ajustado para novo formato antes:315*
                         pAntigoOut.style.right = '0px'; //ajustado para novo formato antes:110*
                         pAntigoOut.style.color = '#1a1a1ad1';
                         pAntigoOut.style.fontFamily = "'Baloo 2'";
@@ -3841,7 +3840,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                     } else {
                         pAntigoOut.innerHTML = `DE: <span style="font-size:30px;">R$ </span>${valorFormatadoAntes}`;
                         pAntigoOut.style.position = 'relative';
-                        pAntigoOut.style.top = '280px'; //ajustado para novo formato antes:315*
+                        pAntigoOut.style.top = '285px'; //ajustado para novo formato antes:315*
                         pAntigoOut.style.right = '0px'; //ajustado para novo formato antes:110*
                         if (charsLeftOfComma === 1) {
                             areaPreco.style.top = '290px'; //ajustado para novo formato antes:285*
@@ -3854,17 +3853,17 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                         pAntigoOut.style.margin = '6px 0 8px 0';
                     }
                 } else if (isOfertaDoDia) {
-                    pAntigoOut.innerHTML = `DE<br><span class="numeros-riscados">R$ ${valorFormatadoAntes}</span><br>POR:`;
+                    pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
                     pAntigoOut.style.color = '#ff0000';
                     pAntigoOut.style.fontFamily = "'SugoDisplay'";
                     pAntigoOut.style.fontSize = '28px';
                     pAntigoOut.style.margin = '5px 0';
                     if (charsLeftOfComma === 1 || charsLeftOfComma === 2) {
-                        pAntigoOut.style.top = '250px'; 
-                        pAntigoOut.style.right = '140px';
+                        pAntigoOut.style.top = '285px'; 
+                        pAntigoOut.style.right = '0px';
                         areaPreco.style.top = '130px';
                     } else {
-                        pAntigoOut.style.top = '210px';
+                        pAntigoOut.style.top = '285px';
                         pAntigoOut.style.right = '0px';
                         pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
                         areaPreco.style.top = '140px'; //ajustado para novo formato antes:190
@@ -4073,20 +4072,22 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
           }
         }
         dOut.textContent = descricaoLimpa.toUpperCase();
+        dOut.style.transform = 'scaleY(1.15)';
         
         if (item.customFontSize && item.customTop) {
           dOut.style.fontSize = item.customFontSize;
           dOut.style.top = item.customTop;
         } else {
           const len = dOut.textContent.length;
-          let fontSize = 40;
-          if (len <= 10) fontSize = 120;
-          else if (len <= 15) fontSize = 100;
-          else if (len <= 25) fontSize = 70;
-          else if (len <= 35) fontSize = 55;
-          else if (len <= 60) fontSize = 45;
+          let fontSize = 30;
+          if (len <= 10) fontSize = 70;
+          else if (len <= 15) fontSize = 65;
+          else if (len <= 25) fontSize = 55;
+          else if (len <= 35) fontSize = 45;  
+          else if (len <= 60) fontSize = 30;
           dOut.style.fontSize = fontSize + 'px';
-          dOut.style.top = '170px';
+          dOut.style.top = '180px';
+          
         }
 
         const precoOfertaValor = item.precoText || '';
@@ -4101,7 +4102,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
           cOut.textContent = parts.centavos;
 
           if (parts.reais.length >= 3) {
-            rOut.style.fontSize = '220px';
+            rOut.style.fontSize = '200px';
             rOut.style.transform = 'scaleY(1.2)';
           } else {
             rOut.style.fontSize = '260px';
@@ -4122,24 +4123,24 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
               pAntigoOut.innerHTML = `DE R$ <span class="numeros-riscados">${valorFormatatedAntes}</span> POR:`;
               pAntigoOut.style.display = '';
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '275px';
+              pAntigoOut.style.top = '285px';
               pAntigoOut.style.right = '0';
               pAntigoOut.style.color = '#606060';
               pAntigoOut.style.fontFamily = "'SugoDisplay'";
               pAntigoOut.style.fontSize = '30px';
               pAntigoOut.style.margin = '6px 0 8px 0';
 
-              areaPreco.style.top = '260px';
+              areaPreco.style.top = '270px';
             } else {
-              pAntigoOut.innerHTML = `DE <br> <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span><br>  POR:`;   
+              pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span> POR:`;   
               pAntigoOut.style.display = '';
               pAntigoOut.style.position = 'relative';
-              pAntigoOut.style.top = '295px';
+              pAntigoOut.style.top = '285px';
 
               if (charsLeftOfComma === 1) {
-                pAntigoOut.style.right = '130px';
+                pAntigoOut.style.right = '0px';
               } else {
-                pAntigoOut.style.right = '150px';
+                pAntigoOut.style.right = '0px';
               }
 
               pAntigoOut.style.color = '';
@@ -4147,7 +4148,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
               pAntigoOut.style.fontSize = '';
               pAntigoOut.style.margin = '6px 0 8px 0';
 
-              areaPreco.style.top = '190px';
+              areaPreco.style.top = '265px';
             }
           }
         } else {
@@ -4160,7 +4161,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
         const lenCada = textoCada.length;
         if (lenCada > 4 && lenCada <= 7) {
           cadaOut.style.fontSize = '35px';
-          const deslocamento = Math.min((lenCada - 4) * 10, 30);
+          const deslocamento = Math.min((lenCada - 4) * 10, 20);
           cadaOut.style.left = (270 - deslocamento) + 'px';
         } else {
           cadaOut.style.fontSize = '40px';
@@ -4260,6 +4261,8 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
 
         const precoOfertaVal = item.precoText || '';
         const parts = formatPtBrToParts(precoOfertaVal);
+        cadaOut.style.marginBottom = parts.reais.length >= 3 ? '50px' : '';
+
         if (appMode) {
             if (parts.reais.length >= 3) {
                 rOut.style.fontSize = '60px';
@@ -4333,7 +4336,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                     if (charsLeftOfComma >= 3) {
                         pAntigoOut.innerHTML = `DE: <span style="font-size:25px;">R$ </span>${valorFormatadoAntes}`;
                         pAntigoOut.style.position = 'relative';
-                        pAntigoOut.style.top = '330px';
+                        pAntigoOut.style.top = '285px';
                         pAntigoOut.style.right = '0px';
                         pAntigoOut.style.color = '#1a1a1ad1';
                         pAntigoOut.style.fontFamily = "'Baloo 2'";
@@ -4343,7 +4346,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                     } else {
                         pAntigoOut.innerHTML = `DE: <span style="font-size:25px;">R$ </span>${valorFormatadoAntes}`;
                         pAntigoOut.style.position = 'relative';
-                        pAntigoOut.style.top = '330px';
+                        pAntigoOut.style.top = '285px';
                         pAntigoOut.style.right = '0px';
                         if (charsLeftOfComma === 1) {
                             areaPreco.style.top = '335px';
@@ -4356,17 +4359,17 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                         pAntigoOut.style.margin = '6px 0 8px 0';
                     }
                 } else if (isOfertaDoDia) {
-                    pAntigoOut.innerHTML = `DE<br><span class="numeros-riscados">R$ ${valorFormatadoAntes}</span><br>POR:`;
+                    pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
                     pAntigoOut.style.color = '#ff0000';
                     pAntigoOut.style.fontFamily = "'SugoDisplay'";
                     pAntigoOut.style.fontSize = '28px';
                     pAntigoOut.style.margin = '5px 0';
                     if (charsLeftOfComma === 1 || charsLeftOfComma === 2) {
-                        pAntigoOut.style.top = '250px'; 
-                        pAntigoOut.style.right = '140px';
+                        pAntigoOut.style.top = '285px'; 
+                        pAntigoOut.style.right = '0px';
                         areaPreco.style.top = '130px';
                     } else {
-                        pAntigoOut.style.top = '210px';
+                        pAntigoOut.style.top = '285px';
                         pAntigoOut.style.right = '0px';
                         pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
                         areaPreco.style.top = '140px';
