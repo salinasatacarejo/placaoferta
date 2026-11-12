@@ -1351,38 +1351,26 @@ letter-spacing: 1px;
         }
     }
 
-    function adjustDescricaoFontSize() {
-      // Se a fonte foi modificada manualmente por +A ou -A, pula a autogestão de tamanho
-      if (idSuffix === '1' && window.modificadoManualmente1) return;
-      if (idSuffix === '2' && window.modificadoManualmente2) return;
+function adjustDescricaoFontSize() {
+  // Se a fonte foi modificada manualmente por +A ou -A, pula a autogestão de tamanho
+  if (idSuffix === '1' && window.modificadoManualmente1) return;
+  if (idSuffix === '2' && window.modificadoManualmente2) return;
 
-      const el = descricaoOutput;
-      const textLength = el.textContent.length;
-      const encarteAtualAttr = cartazCompletoLocal.getAttribute('data-encarte') || window.opcaoCartazSelecionada;
-      const checkOfertaDoDia = (encarteAtualAttr === 'OFERTA DO DIA');
-//100,80,50,45,40
-      let fontSize;
-        if (textLength <= 10) {
-          fontSize = 70;
-        } else if (textLength <= 15) {
-          fontSize = 65;
-        } else if (textLength <= 25) {
-          fontSize = 55;
-        } else if (textLength <= 35) {
-          fontSize = 45;
-        } else if (textLength <= 60) {
-          fontSize = 30;
-        } else {
-          fontSize = 30;
-        }
-        el.style.fontSize = fontSize + 'px';
-        // Se for Oferta do Dia inicia com 115px, senão mantém o padrão de 170px
-        if (checkOfertaDoDia) {
-          el.style.top = '200px';
-        } else {
-          el.style.top = '180px';
-        }
-    }
+  const el = descricaoOutput;
+  const textLength = el.textContent.length;
+  const encarteAtualAttr = cartazCompletoLocal.getAttribute('data-encarte') || window.opcaoCartazSelecionada;
+  const checkOfertaDoDia = (encarteAtualAttr === 'OFERTA DO DIA');
+
+  // [limite de caracteres, tamanho da fonte]; o último valor é o tamanho finalRE
+  const tabela = checkOfertaDoDia
+    ? [[10, 55], [15, 45], [25, 35], [Infinity, 30]]
+    : [[10, 70], [15, 65], [25, 55], [35, 45], [Infinity, 30]];
+
+  const fontSize = tabela.find(([limite]) => textLength <= limite)[1];
+
+  el.style.fontSize = fontSize + 'px';
+  el.style.top = checkOfertaDoDia ? '200px' : '180px';
+}
     
 
  function updatePreview() {
@@ -1422,13 +1410,13 @@ if (isOfertaDoDia) {
         
         // Ajustes de posicionamento específicos da Oferta do Dia por dígitos
         if (charsLeftOfComma === 1) {
-          precoAntigoOutput.style.top = '265px'; 
+          precoAntigoOutput.style.top = '285px'; 
           precoAntigoOutput.style.right = '0px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '260px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
         } else if (charsLeftOfComma === 2) {
-          precoAntigoOutput.style.top = '265px';
+          precoAntigoOutput.style.top = '285px';
           precoAntigoOutput.style.right = '0px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '260px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
         } else {
           precoAntigoOutput.style.top = '230px';
           precoAntigoOutput.style.right = '140px';
@@ -1436,7 +1424,7 @@ if (isOfertaDoDia) {
           
       precoAntigoOutput.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
       precoAntigoOutput.style.top = '285px';
-          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '265px';
+          document.querySelector(`#cartaz${idSuffix} .preco-area`).style.top = '270px';
         }
       } else {
         // BLOCO PARA CARTAZES NORMAIS
