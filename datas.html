@@ -447,7 +447,7 @@
 
     .rodape{
       font-family: Arial, sans-serif;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
       font-weight: bold;
       position:absolute;
       bottom:18px;
@@ -3201,7 +3201,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
           rOut.style.transform = 'scaleY(1.1)';
           rsOut.style.top = '20px';
         } else {
-          rOut.style.fontSize = '240px';
+          rOut.style.fontSize = '260px';
           rOut.style.transform = 'scaleY(1)';
         }
       } else {
@@ -3804,7 +3804,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                 rOut.style.transform = 'scaleY(1.1)';
                 rsOut.style.top = '20px';
             } else {
-                rOut.style.fontSize = '240px';
+                rOut.style.fontSize = '260px';
                 rOut.style.transform = 'scaleY(1)';
             }
         } else {
@@ -4303,14 +4303,13 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
             cOut.style.fontSize = '70px';
             if(stackRender) stackRender.style.marginTop = '5px';
             rsOut.style.left = '-20px';
-            rsOut.style.fontSize = '32px';
+            rsOut.style.fontSize = '42px';
             rOut.style.top = '170px';
             if (parts.reais.length >= 3) {
                 rOut.style.fontSize = '200px';
                 rOut.style.transform = 'scaleY(1.1)';
-                rsOut.style.top = '20px';
             } else {
-                rOut.style.fontSize = '240px';
+                rOut.style.fontSize = '260px';
                 rOut.style.transform = 'scaleY(1)';
             }
         } else {
@@ -4322,7 +4321,6 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
             rsOut.style.left = '';
             rsOut.style.marginTop = '';
             rsOut.style.fontSize = '';
-            rsOut.style.top = '';
         }
 
         const precoAntesVal = item.precoAntigoText || item.precoAntesText || '';
@@ -4367,12 +4365,12 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
                     if (charsLeftOfComma === 1 || charsLeftOfComma === 2) {
                         pAntigoOut.style.top = '285px'; 
                         pAntigoOut.style.right = '0px';
-                        areaPreco.style.top = '130px';
+                        areaPreco.style.top = '265px';
                     } else {
                         pAntigoOut.style.top = '285px';
                         pAntigoOut.style.right = '0px';
                         pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
-                        areaPreco.style.top = '140px';
+                        areaPreco.style.top = '275px';
                     }
                 }
             }
@@ -4479,11 +4477,9 @@ if (appMode) {
         } else if (isOfertaDoDia) {
             if (rodapeDataIni && rodapeDataIni.includes('-')) {
                 const di = rodapeDataIni.split('-');
-                rodOut.textContent = `Aproveite! Oferta exclusiva para o dia ${di[2]}/${di[1]} ou enquanto durar o estoque`;
-                rodOut.style.top ='410px';
+                rodOut.innerHTML = `Aproveite! Oferta exclusiva para o dia ${di[2]}/${di[1]} ou<br>enquanto durar o estoque`;
             } else {
                 rodOut.textContent = ``;
-                rodOut.style.top ='410px';
             }
         } else {
             rodOut.style.top = '';
