@@ -81,6 +81,10 @@
     .adm-dica-campo label { font:700 12px Arial,sans-serif; color:#39424e; }
     .adm-dica-campo input, .adm-dica-campo select, .adm-dica-campo textarea { width:100%; box-sizing:border-box; border:1px solid #cbd2dc; border-radius:6px; padding:9px; font:13px Arial,sans-serif; background:#fff; }
     .adm-dica-campo textarea { min-height:82px; resize:vertical; }
+    .adm-cor-linha { display:flex; gap:8px; align-items:center; }
+    .adm-cor-linha select { flex:1; min-width:0; }
+    .adm-cor-linha input[type=color] { width:46px; height:38px; padding:2px; border:1px solid #cbd2dc; border-radius:6px; background:#fff; cursor:pointer; flex:none; }
+    .adm-cor-hex { font:700 11px Arial,sans-serif; color:#68727e; min-width:58px; text-transform:uppercase; }
     .adm-seletor-linha { display:flex; gap:7px; }
     .adm-seletor-linha input { flex:1; }
     .adm-seletor-linha button { background:#59636e; color:#fff; white-space:nowrap; }
@@ -170,7 +174,7 @@
             <input type="hidden" id="adm-dica-id">
             <div class="adm-dica-grid">
               <div class="adm-dica-campo"><label>Título</label><input id="adm-dica-titulo" type="text" placeholder="Ex.: Quantidade de cópias"></div>
-              <div class="adm-dica-campo"><label>Tipo</label><select id="adm-dica-tipo"><option value="balao">Balão</option><option value="popup">Pop-up central</option><option value="faixa">Faixa no topo</option></select></div>
+              <div class="adm-dica-campo"><label>Tipo</label><div class="adm-cor-linha"><select id="adm-dica-tipo"><option value="balao">Balão</option><option value="popup">Pop-up central</option><option value="faixa">Faixa no topo</option></select><input type="color" id="adm-dica-cor-tipo" value="#213966" title="Cor do tipo selecionado"><span class="adm-cor-hex" id="adm-dica-cor-tipo-hex">#213966</span></div></div>
               <div class="adm-dica-campo largo"><label>Texto da orientação</label><textarea id="adm-dica-texto" placeholder="Digite a orientação que o usuário verá..."></textarea></div>
               <div class="adm-dica-campo largo">
                 <label>🎯 ONDE APONTAR</label>
@@ -188,7 +192,7 @@
               <div class="adm-dica-campo"><label>Quando mostrar</label><select id="adm-dica-quando"><option value="abrir">Ao abrir a página</option><option value="cartazes">Quando os cartazes carregarem</option><option value="clique">Ao clicar em determinado botão/elemento</option></select></div>
               <div class="adm-dica-campo largo" id="adm-gatilho-wrap" style="display:none"><label>Elemento que dispara a orientação</label><div class="adm-seletor-linha"><input id="adm-dica-gatilho" type="text" placeholder="Digite o seletor CSS ou use o botão 🎯"><button type="button" id="adm-selecionar-gatilho">🎯 Selecionar gatilho</button></div><small id="adm-dica-gatilho-label" style="color:#68727e"></small></div>
               <div class="adm-dica-campo"><label>Frequência</label><select id="adm-dica-frequencia"><option value="sempre">Sempre</option><option value="acesso">Uma vez por acesso</option><option value="dispositivo">Uma única vez por dispositivo</option></select></div>
-              <div class="adm-dica-campo"><label>Destaque do elemento</label><select id="adm-dica-destaque"><option value="nenhum">Nenhum</option><option value="piscar">Piscar</option><option value="contorno">Contorno</option><option value="pulsar">Pulsar</option></select></div>
+              <div class="adm-dica-campo"><label>Destaque do elemento</label><div class="adm-cor-linha"><select id="adm-dica-destaque"><option value="nenhum">Nenhum</option><option value="piscar">Piscar</option><option value="contorno">Contorno</option><option value="pulsar">Pulsar</option></select><input type="color" id="adm-dica-cor-destaque" value="#ff8a1c" title="Cor do destaque" style="display:none"><span class="adm-cor-hex" id="adm-dica-cor-destaque-hex" style="display:none">#ff8a1c</span></div></div>
               <div class="adm-dica-campo"><label>Sequência / grupo</label><input id="adm-dica-sequencia" type="text" placeholder="Ex.: tutorial-impressao (opcional)"></div>
               <div class="adm-dica-campo"><label>Ordem na sequência</label><input id="adm-dica-ordem" type="number" min="1" step="1" value="1"></div>
               <div class="adm-dica-campo"><label class="adm-switch"><input id="adm-dica-ativa" type="checkbox" checked> Orientação ativa</label></div>
@@ -361,7 +365,7 @@ const escHtml = (v='') => String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'
 const ADM_PIN = '2026'; // protege a interface; não substitui as Regras do Firebase
 
   const ADM_TIPOS = [
-    'PREÇO AVULSO', 'ENCARTE SEMANAL', 'OFERTA DO DIA'
+    'PREÇO NORMAL', 'PREÇO OFERTA', 'OFERTA DO DIA'
   ];
 
   const ADM_FUNCOES = [
@@ -533,7 +537,7 @@ let unsubs = [];
 
 // ===== Funções por tipo de placa =====
 function montarPerm() {
-  $('adm-permissoes-head').innerHTML = `<tr><th>FUNÇÃO</th><th class="adm-todas-cell">TODAS</th>${ADM_TIPOS.map(t => `<th>${t === 'PREÇO AVULSO' ? 'PLACA AVULSA' : t}</th>`).join('')}</tr>`;
+  $('adm-permissoes-head').innerHTML = `<tr><th>FUNÇÃO</th><th class="adm-todas-cell">TODAS</th>${ADM_TIPOS.map(t => `<th>${t === 'PREÇO NORMAL' ? 'PREÇO NORMAL' : t}</th>`).join('')}</tr>`;
   $('adm-permissoes-body').innerHTML = T[alvo].funcs.map(f => {
     const p = estado.perm[f.id] || {};
     const todos = ADM_TIPOS.every(t => p[t] !== false);
@@ -637,6 +641,15 @@ function admIniciarSelecao(campo) {
 $('adm-picker-cancelar').onclick = fecharPicker;
 
 // ===== Dicas e orientações =====
+  function admAtualizarCores() {
+    const ct=document.getElementById('adm-dica-cor-tipo'), cd=document.getElementById('adm-dica-cor-destaque');
+    document.getElementById('adm-dica-cor-tipo-hex').textContent=ct.value;
+    document.getElementById('adm-dica-cor-destaque-hex').textContent=cd.value;
+    const usaCor=['piscar','contorno','pulsar'].includes(document.getElementById('adm-dica-destaque').value);
+    cd.style.display=usaCor?'':'none';
+    document.getElementById('adm-dica-cor-destaque-hex').style.display=usaCor?'':'none';
+  }
+
   function admLimparFormularioDica() {
     document.getElementById('adm-dica-id').value='';
     document.getElementById('adm-dica-titulo').value='';
@@ -653,6 +666,9 @@ $('adm-picker-cancelar').onclick = fecharPicker;
     document.getElementById('adm-dica-gatilho-label').textContent='';
     document.getElementById('adm-dica-frequencia').value='acesso';
     document.getElementById('adm-dica-destaque').value='contorno';
+    document.getElementById('adm-dica-cor-tipo').value='#213966';
+    document.getElementById('adm-dica-cor-destaque').value='#ff8a1c';
+    admAtualizarCores();
     document.getElementById('adm-dica-sequencia').value='';
     document.getElementById('adm-dica-ordem').value='1';
     document.getElementById('adm-dica-ativa').checked=true;
@@ -683,6 +699,9 @@ $('adm-picker-cancelar').onclick = fecharPicker;
       document.getElementById('adm-dica-gatilho-label').textContent=dica.gatilhoLabel ? `Selecionado: ${dica.gatilhoLabel}  •  ${dica.gatilho||''}` : '';
       document.getElementById('adm-dica-frequencia').value=dica.frequencia || 'acesso';
       document.getElementById('adm-dica-destaque').value=dica.destaque || 'nenhum';
+      document.getElementById('adm-dica-cor-tipo').value=dica.corTipo || '#213966';
+      document.getElementById('adm-dica-cor-destaque').value=dica.corDestaque || '#ff8a1c';
+      admAtualizarCores();
       document.getElementById('adm-dica-sequencia').value=dica.sequencia || '';
       document.getElementById('adm-dica-ordem').value=dica.ordem || 1;
       document.getElementById('adm-dica-ativa').checked=dica.ativa !== false;
@@ -696,12 +715,14 @@ $('adm-picker-cancelar').onclick = fecharPicker;
     const lista = document.getElementById('adm-dicas-lista');
     const dicas = Object.entries(window.__dicasOrientacao || {}).map(([id,d])=>({id,...d})).sort((a,b)=>(a.sequencia||'').localeCompare(b.sequencia||'') || Number(a.ordem||1)-Number(b.ordem||1));
     if (!dicas.length) { lista.innerHTML='<div style="padding:12px;border:1px dashed #cbd2dc;border-radius:8px;color:#68727e;font-size:12px;">Nenhuma orientação cadastrada. Clique em <b>+ Nova orientação</b>.</div>'; return; }
-    lista.innerHTML=dicas.map(d=>`<div class="adm-dica-item ${d.ativa===false?'inativa':''}" data-id="${escHtml(d.id)}"><div><div class="adm-dica-item-titulo">${d.ativa===false?'⚪':'🟢'} ${escHtml(d.titulo||'Sem título')}</div><div class="adm-dica-item-meta">${escHtml(d.tipo||'balao')} • ${escHtml(d.quando||'abrir')} • ${escHtml(d.frequencia||'sempre')} • ${d.aplicacao==='todos'?'todos os elementos iguais':'somente o selecionado'}${d.sequencia?` • sequência: ${escHtml(d.sequencia)} #${Number(d.ordem||1)}`:''}</div><div class="adm-dica-item-texto">${escHtml(d.texto||'')}</div></div><div class="adm-dica-item-acoes"><button class="adm-dica-editar">Editar</button><button class="adm-dica-toggle">${d.ativa===false?'Ativar':'Desativar'}</button><button class="adm-dica-excluir">Excluir</button></div></div>`).join('');
+    lista.innerHTML=dicas.map(d=>`<div class="adm-dica-item ${d.ativa===false?'inativa':''}" data-id="${escHtml(d.id)}"><div><div class="adm-dica-item-titulo">${d.ativa===false?'⚪':'🟢'} ${escHtml(d.titulo||'Sem título')}</div><div class="adm-dica-item-meta">${escHtml(d.tipo||'balao')} <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${escHtml(d.corTipo||'#213966')};border:1px solid #cbd2dc;vertical-align:middle"></span> • ${escHtml(d.quando||'abrir')} • ${escHtml(d.frequencia||'sempre')} • ${d.aplicacao==='todos'?'todos os elementos iguais':'somente o selecionado'}${d.sequencia?` • sequência: ${escHtml(d.sequencia)} #${Number(d.ordem||1)}`:''}</div><div class="adm-dica-item-texto">${escHtml(d.texto||'')}</div></div><div class="adm-dica-item-acoes"><button class="adm-dica-editar">Editar</button><button class="adm-dica-toggle">${d.ativa===false?'Ativar':'Desativar'}</button><button class="adm-dica-excluir">Excluir</button></div></div>`).join('');
   }
 
   $('adm-nova-dica').addEventListener('click',()=>admAbrirFormularioDica());
   document.getElementById('adm-dica-cancelar').addEventListener('click',()=>document.getElementById('adm-dica-form').classList.remove('aberto'));
   document.getElementById('adm-dica-quando').addEventListener('change',admAtualizarCampoGatilho);
+  ['adm-dica-cor-tipo','adm-dica-cor-destaque'].forEach(i=>document.getElementById(i).addEventListener('input',admAtualizarCores));
+  document.getElementById('adm-dica-destaque').addEventListener('change',admAtualizarCores);
   document.getElementById('adm-selecionar-alvo').addEventListener('click',()=>admIniciarSelecao('alvo'));
   document.getElementById('adm-selecionar-gatilho').addEventListener('click',()=>admIniciarSelecao('gatilho'));
   document.querySelectorAll('input[name="adm-dica-aplicacao"]').forEach(r=>r.addEventListener('change',admAtualizarAlvoPorAplicacao));
@@ -729,6 +750,8 @@ $('adm-picker-cancelar').onclick = fecharPicker;
       gatilhoLabel:document.getElementById('adm-dica-gatilho-label').textContent.replace(/^Selecionado:\s*/,'').split('  •  ')[0],
       frequencia:document.getElementById('adm-dica-frequencia').value,
       destaque:document.getElementById('adm-dica-destaque').value,
+      corTipo:document.getElementById('adm-dica-cor-tipo').value,
+      corDestaque:document.getElementById('adm-dica-cor-destaque').value,
       sequencia:document.getElementById('adm-dica-sequencia').value.trim(),
       ordem:Math.max(1,parseInt(document.getElementById('adm-dica-ordem').value,10)||1),
       ativa:document.getElementById('adm-dica-ativa').checked,
