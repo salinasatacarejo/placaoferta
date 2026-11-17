@@ -478,11 +478,16 @@ letter-spacing: 1px;
       cursor: pointer;
       z-index: 10001;
       display: flex;
-      flex-direction: column;
+      flex-direction: column; 
       gap: 4px;
       box-shadow: -2px 0 10px rgba(0,0,0,0.2);
       transition: right 0.3s ease;
     }
+
+        #menu-lateral-toggle:hover {
+          background: #fc5b0a;
+
+}
     #menu-lateral-toggle .tracinho {
       width: 20px;
       height: 3px;
@@ -490,6 +495,9 @@ letter-spacing: 1px;
       display: block;
       border-radius: 2px;
     }
+#menu-lateral-toggle:hover .tracinho {
+            border: 1px solid #000000;
+        }
     #menu-lateral-container {
       position: fixed;
       right: -250px;
