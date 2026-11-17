@@ -483,7 +483,7 @@
       align-items: center;
     }
     #loading-card {
-      background: white;
+      background: rgb(220, 220, 220);
       width: 340px;
       height: 190px;
       border-radius: 12px;
@@ -492,7 +492,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      color: var(--blue);
+      color: #000000;
       font-weight: 700;
       font-size: 18px;
       text-align: center;
@@ -730,6 +730,7 @@
       gap:12px;
     }
     #contador-cartazes-selecionados.visivel { display:flex; }
+    #btn-selecionar-todos-filtrados,
     #btn-desmarcar-todos {
       border:1px solid rgba(255,255,255,.65);
       background:#fff;
@@ -742,6 +743,7 @@
       cursor:pointer;
       white-space:nowrap;
     }
+    #btn-selecionar-todos-filtrados:hover,
     #btn-desmarcar-todos:hover { background:#eef3fb; }
 
     /* Permite ordenar pelos selecionados clicando na célula do cabeçalho,
@@ -834,14 +836,26 @@
        TABELA COM COLUNAS FIXAS — PADRÃO DEFINIDO
        ========================================================= */
     #tabela-container table { table-layout: fixed; }
-    #tabela-container th:nth-child(1), #tabela-container td:nth-child(1) { width: 30px; }
-    #tabela-container th:nth-child(2), #tabela-container td:nth-child(2) { width: 230px; }
-    #tabela-container th:nth-child(3), #tabela-container td:nth-child(3) { width: 90px; }
-    #tabela-container th:nth-child(4), #tabela-container td:nth-child(4) { width: 130px; }
-    #tabela-container th:nth-child(5), #tabela-container td:nth-child(5) { width: 50px; }
-    #tabela-container th:nth-child(6), #tabela-container td:nth-child(6) { width: 40px; }
-    #tabela-container th:nth-child(7), #tabela-container td:nth-child(7) { width: 125px; }
-    #tabela-container th:nth-child(8), #tabela-container td:nth-child(8) { width: 230px; }
+    /* Larguras presas à COLUNA (classe/atributo) e não à posição (nth-child):
+       assim, se o ADM ocultar uma coluna, as demais mantêm a largura correta. */
+    #tabela-container th.col-checkbox,           #tabela-container td.col-checkbox   { width: 30px; }
+    #tabela-container th[data-sort="descricao"], #tabela-container td.col-descricao  { width: 230px; }
+    #tabela-container th[data-sort="tipo"],      #tabela-container td.col-tipo       { width: 90px; }
+    #tabela-container th[data-sort="vigencia"],  #tabela-container td.col-vigencia   { width: 130px; }
+    #tabela-container th[data-sort="preco"],     #tabela-container td.col-preco      { width: 50px; }
+    #tabela-container th[data-sort="loja"],      #tabela-container td.col-loja       { width: 40px; }
+    #tabela-container th[data-sort="salvo"],     #tabela-container td.col-salvo      { width: 125px; }
+    #tabela-container th.col-acoes,              #tabela-container td.col-acoes      { width: 260px; }
+
+    /* Coluna AÇÕES / CÓPIAS: duas áreas de largura FIXA (botões + cópias), iguais no
+       cabeçalho e nas linhas. Ocultar botões não move mais o campo de CÓPIAS. */
+    .acoes-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .acoes-botoes { width: 190px; flex: 0 0 190px; display: flex; align-items: center; justify-content: center; }
+    .acoes-copias { width: 54px; flex: 0 0 54px; display: flex; align-items: center; justify-content: center; }
+    th.col-acoes .acoes-botoes, th.col-acoes .acoes-copias { text-align: center; }
+    .acoes-botoes { gap: 4px; }
+    .acoes-botoes > * { margin: 0 !important; } /* o espaçamento agora vem do gap, então o último botão visível fica centralizado */
+    .acoes-copias .input-quantidade-copias { margin: 0; }
 
 
     /* Texto longo das células: corre horizontalmente ao passar o mouse */
@@ -1154,9 +1168,9 @@
         <label for="filtro-tipo">Buscar por Tipo</label>
         <select id="filtro-tipo" class="input-filtro" style="width: 185px; height: 39px; box-sizing: border-box; font-family: gidole, sans-serif;">
           <option value="">Todos os Tipos</option>
-          <option value="PREÇO AVULSO">PLACA AVULSA</option>
-          <option value="ENCARTE SEMANAL" style="color:gray">ENCARTE SEMANAL</option>
-          <option value="OFERTA DO DIA" style="color:#835acf">OFERTA DO DIA</option>
+          <option value="PREÇO NORMAL" style="color:rgb(100, 100, 100); font-weight:900;">PREÇO NORMAL</option>
+          <option value="PREÇO OFERTA" style="color:#8a2222; font-weight:900;">PREÇO OFERTA</option>
+          <option value="OFERTA DO DIA" style="color:#fa731b; font-weight:900;">OFERTA DO DIA</option>
         </select>
       </div>
       <div class="field-data">
@@ -1207,9 +1221,9 @@
             <th class="sortable" data-sort="loja">Loja <span class="sort-icon"></span></th>
             <th class="sortable" data-sort="salvo">Salvo em <span class="sort-icon"></span></th>
 <th class="col-acoes">
-    <div style="display:flex; align-items:center; justify-content:center;">
-        <span style="flex:1;">AÇÕES</span>
-        <span style="width:53px; text-align:center;">CÓPIAS</span>
+    <div class="acoes-wrap">
+        <span class="acoes-botoes">AÇÕES</span>
+        <span class="acoes-copias">CÓPIAS</span>
     </div>
 </th>
           </tr>
@@ -1248,6 +1262,7 @@
 
   <div id="contador-cartazes-selecionados" aria-live="polite">
     <span id="contador-cartazes-selecionados-texto">0 cartazes selecionados</span>
+    <button type="button" id="btn-selecionar-todos-filtrados" title="Seleciona todos os cartazes da lista (todas as páginas), respeitando os filtros ativos">Selecionar todos</button>
     <button type="button" id="btn-desmarcar-todos">Desmarcar todos</button>
   </div>
 
@@ -1276,7 +1291,7 @@
     <div class="suporte-loja-box" role="dialog" aria-modal="true" aria-labelledby="suporte-loja-titulo">
       <h3 id="suporte-loja-titulo">Identifique sua loja</h3>
 <p>Esta informação será salva neste navegador para os próximos chamados.</p>
-<input type="text" id="suporte-loja-input" placeholder="Ex.: Loja 1" maxlength="40" autocomplete="off">
+<input type="text" id="suporte-loja-input" placeholder="Ex.: Seu nome ou nome da loja" maxlength="40" autocomplete="off">
 <div id="suporte-loja-erro" role="alert"></div>
       <div class="suporte-loja-acoes">
         <button type="button" id="suporte-loja-cancelar">Cancelar</button>
@@ -2215,7 +2230,7 @@ limparProjetoFirebaseAnterior();
   if (!item) return;
 
   // Extrai o tipo limpo para preencher o select da nova página
-  let tipo = "PREÇO AVULSO";
+  let tipo = "PREÇO NORMAL";
   let descricaoLimpa = item.descricaoText || "";
   if (descricaoLimpa.startsWith("[")) {
     const indexFechamento = descricaoLimpa.indexOf("]");
@@ -2438,7 +2453,7 @@ limparProjetoFirebaseAnterior();
       const item = window.listaCartazesMemoria[id];
       
       // Extrai o Tipo de Cartaz se houver colchetes na descrição
-      let tipo = "PREÇO AVULSO";
+      let tipo = "PREÇO NORMAL";
       let descricaoLimpa = item.descricaoText || "";
       if (descricaoLimpa.startsWith("[")) {
         const indexFechamento = descricaoLimpa.indexOf("]");
@@ -2448,8 +2463,8 @@ limparProjetoFirebaseAnterior();
         }
       }
       
-      if (tipo === "PLACA AVULSA") {
-        tipo = "PREÇO AVULSO";
+      if (tipo === "PREÇO NORMAL") {
+        tipo = "PREÇO NORMAL";
       }
 
 // Monta a string de vigência
@@ -2503,6 +2518,9 @@ if (isOfertaDoDiaItem && item.dataInicial) {
       const matchLoja = !valFiltroLoja || row.loja.toLowerCase() === valFiltroLoja;
       return matchTipo && matchDesc && matchPreco && matchVigenciaFinal && matchLoja;
     });
+
+    // Guarda os IDs de TODOS os cartazes que passam nos filtros (todas as páginas)
+    window.idsCartazesFiltrados = itensArray.map(row => row.id);
 
     if (itensArray.length === 0) {
       tabelaContainer.style.display = 'none';
@@ -2604,20 +2622,23 @@ document.getElementById('last-page').disabled =
       const nomeParaDownload = sanitizeFileName(row.descricao, 'pdf');
 
       // Define a cor de texto correspondente a cada tipo de cartaz solicitado
-      let corDoTipo = "black";
+let corDoTipo = "black";
       const tUpper = row.tipo.toUpperCase();
-      if (tUpper.includes("ENCARTE SEMANAL")) corDoTipo = "gray";
-      else if (tUpper.includes("PREÇO AVULSO") || tUpper.includes("PLACA AVULSA")) corDoTipo = "black";
+      if (tUpper.includes("PREÇO OFERTA")) corDoTipo = "#8a2222";
+      else if (tUpper.includes("OFERTA DO DIA")) corDoTipo = "#fa731b";
+      else if (tUpper.includes("PREÇO NORMAL") || tUpper.includes("PREÇO NORMAL")) corDoTipo = "#646464";
 
       tr.innerHTML = `
         <td class="col-checkbox"><input type="checkbox" class="cartaz-select-item" data-id="${row.id}" ${window.cartazesSelecionados.has(row.id) ? 'checked' : ''}></td>
         <td class="col-descricao"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.descricao}</span></span></td>
-        <td class="col-tipo" style="color: ${corDoTipo};"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.tipo === "PREÇO AVULSO" ? "PLACA AVULSA" : row.tipo}</span></span></td>
+        <td class="col-tipo" style="color: ${corDoTipo};"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.tipo === "PREÇO NORMAL" ? "PREÇO NORMAL" : row.tipo}</span></span></td>
         <td class="col-vigencia"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.vigencia}</span></span></td>
         <td class="col-preco"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.precoTexto}</span></span></td>
         <td class="col-loja" style="font-weight: bold; color: #555;"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.loja}</span></span></td> <td class="col-salvo"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.salvoTexto}</span></span></td>
         <td class="col-acoes">
-          <a href="${pdfUrl}" target="_blank" class="btn-visualizar" title="Visualizar">
+          <div class="acoes-wrap">
+            <div class="acoes-botoes">
+<a href="${pdfUrl}" target="_blank" class="btn-visualizar" title="Visualizar">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
         <circle cx="12" cy="12" r="3"></circle>
@@ -2643,7 +2664,11 @@ document.getElementById('last-page').disabled =
         <line x1="14" y1="11" x2="14" y2="17"></line>
     </svg>
 </button>
+            </div>
+            <div class="acoes-copias">
 <input type="number" class="input-quantidade-copias" data-id="${row.id}" min="1" step="1" value="${obterQuantidadeCopias(row.id)}" title="Quantidade de cópias deste cartaz na exportação">
+            </div>
+          </div>
         </td>
       `;
 
@@ -2912,6 +2937,23 @@ document.getElementById('last-page').addEventListener('click', () => {
     // Não reordena automaticamente ao selecionar/desmarcar.
   });
 
+  // Seleciona TODOS os cartazes da lista filtrada, em todas as páginas da paginação.
+  // Adiciona à seleção existente (não substitui) e não reordena a tabela.
+  document.getElementById('btn-selecionar-todos-filtrados').addEventListener('click', () => {
+    const ids = Array.isArray(window.idsCartazesFiltrados)
+      ? window.idsCartazesFiltrados
+      : Object.keys(window.listaCartazesMemoria || {});
+    ids.forEach(id => window.cartazesSelecionados.add(id));
+
+    // Atualiza os checkboxes da página atual
+    document.querySelectorAll('.cartaz-select-item').forEach(cb => {
+      if (window.cartazesSelecionados.has(cb.getAttribute('data-id'))) cb.checked = true;
+    });
+
+    atualizarCheckboxSelecionarTodos();
+    atualizarContadorSelecionados();
+  });
+
   // Desmarca TODOS os cartazes selecionados, inclusive os que estão em outras páginas.
   document.getElementById('btn-desmarcar-todos').addEventListener('click', () => {
     window.cartazesSelecionados.clear();
@@ -3019,7 +3061,7 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
 
     // ----- Fundo e classes de modo -----
     let fundo;
-    if (encarte === 'PREÇO AVULSO' || encarte === 'PLACA AVULSA') fundo = 'fundo-cartaz-preço-normal.png';
+    if (encarte === 'PREÇO NORMAL' || encarte === 'PREÇO NORMAL') fundo = 'fundo-cartaz-preço-normal.png';
     else if (isOfertaDoDia) fundo = 'fundo-ofertadia.png';
     else fundo = 'fundo-cartaz.png';
     cartazRender.style.backgroundImage = `url('${fundo}')`;
@@ -3354,7 +3396,7 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
 
     // ----- Fundo e classes de modo -----
     let fundo;
-    if (encarte === 'PREÇO AVULSO' || encarte === 'PLACA AVULSA') fundo = 'fundo-cartaz-preço-normal.png';
+    if (encarte === 'PREÇO NORMAL' || encarte === 'PREÇO NORMAL') fundo = 'fundo-cartaz-preço-normal.png';
     else if (isOfertaDoDia) fundo = 'fundo-ofertadia.png';
     else fundo = 'fundo-cartaz.png';
     cartazRender.style.backgroundImage = `url('${fundo}')`;
@@ -3774,7 +3816,7 @@ if (item.customFontSize && item.customTop) {
         const isOfertaDoDia = (encarteAtual === 'OFERTA DO DIA');
         const stackRender = document.getElementById('price-stack-render');
 
-        if (encarteAtual === 'PREÇO AVULSO' || encarteAtual === 'PLACA AVULSA') {
+        if (encarteAtual === 'PREÇO NORMAL' || encarteAtual === 'PREÇO NORMAL') {
             cartazRender.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')";
         } else if (isOfertaDoDia) {
             cartazRender.style.backgroundImage = "url('fundo-ofertadia.png')";
@@ -3942,7 +3984,7 @@ if (item.customFontSize && item.customTop) {
   // MODO ADM - CONTROLE DE FUNÇÕES POR TIPO DE PLACA
   // ============================================================
   const ADM_TIPOS = [
-    'PREÇO AVULSO', 'ENCARTE SEMANAL', 'OFERTA DO DIA'
+    'PREÇO NORMAL', 'PREÇO OFERTA', 'OFERTA DO DIA'
   ];
 
   const ADM_FUNCOES = [
@@ -4031,9 +4073,9 @@ if (item.customFontSize && item.customTop) {
   window.__admPermissoes = {};
 
   function admTipoNormalizado(tipo) {
-    let t = String(tipo || 'PREÇO AVULSO').trim().toUpperCase();
-    if (t === 'PLACA AVULSA') t = 'PREÇO AVULSO';
-    return ADM_TIPOS.includes(t) ? t : 'PREÇO AVULSO';
+    let t = String(tipo || 'PREÇO NORMAL').trim().toUpperCase();
+    if (t === 'PREÇO NORMAL') t = 'PREÇO NORMAL';
+    return ADM_TIPOS.includes(t) ? t : 'PREÇO NORMAL';
   }
 
   function admTipoDoItem(item) {
@@ -4042,7 +4084,7 @@ if (item.customFontSize && item.customTop) {
       const fim = descricao.indexOf(']');
       if (fim !== -1) return admTipoNormalizado(descricao.substring(1, fim));
     }
-    return 'PREÇO AVULSO';
+    return 'PREÇO NORMAL';
   }
 
   function admConfigPadrao() {
@@ -4073,7 +4115,7 @@ if (item.customFontSize && item.customTop) {
     if (window.__admAtivo) return false;
     const bloqueados = selecionados.filter(x => !admPermitido(funcao, x.tipo));
     if (!bloqueados.length) return false;
-    const tipos = [...new Set(bloqueados.map(x => x.tipo === 'PREÇO AVULSO' ? 'PLACA AVULSA' : x.tipo))];
+    const tipos = [...new Set(bloqueados.map(x => x.tipo === 'PREÇO NORMAL' ? 'PREÇO NORMAL' : x.tipo))];
     alert(`${mensagemBase || 'Esta função está desativada'} para: ${tipos.join(', ')}.`);
     return true;
   }
@@ -4193,7 +4235,7 @@ if (item.customFontSize && item.customTop) {
     const id=e.target.dataset.id, tipo=admTipoDoItem(window.listaCartazesMemoria?.[id]);
     if (!admPermitido('previewEditor',tipo)) {
       e.target.checked=false; e.preventDefault(); e.stopImmediatePropagation();
-      alert(`Prévia / Editor do PDF está desativado pelo administrador para ${tipo === 'PREÇO AVULSO' ? 'PLACA AVULSA' : tipo}.`);
+      alert(`Prévia / Editor do PDF está desativado pelo administrador para ${tipo === 'PREÇO NORMAL' ? 'PREÇO NORMAL' : tipo}.`);
     }
   }, true);
 
