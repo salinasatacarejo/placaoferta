@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Administrativo</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:#eef1f6; color:#222; }
+  #adm-login { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  #adm-login .box { background:#fff; padding:26px; border-radius:12px; width:300px; box-shadow:0 12px 36px rgba(0,0,0,.18); text-align:center; }
+  #adm-login input { width:100%; box-sizing:border-box; padding:10px; margin:12px 0 6px; border:1px solid #cbd2dc; border-radius:6px; font-size:16px; }
+  #adm-login button { width:100%; padding:10px; border:0; border-radius:6px; background:#213966; color:#fff; font-weight:700; cursor:pointer; }
+  #adm-login-erro { color:#c0392b; font-size:13px; min-height:18px; }
+  #adm-app { display:none; max-width:1450px; margin:0 auto; padding:14px; }
+  .adm-box { width:auto !important; max-height:none !important; }
+  .adm-alvos { display:flex; gap:8px; align-items:center; }
+  .adm-header .adm-alvo { width:auto; height:auto; font-size:13px; padding:8px 14px; background:transparent; color:#fff; border:2px solid #fff; border-radius:8px; }
+  .adm-alvo { border:2px solid #fff; background:transparent; color:#fff; border-radius:8px; padding:8px 14px; font-weight:700; cursor:pointer; }
+  .adm-header .adm-alvo.ativa { background:#fff; color:#172033; }
+  #adm-picker { display:none; position:fixed; inset:0; z-index:30000; background:rgba(0,0,0,.75); flex-direction:column; padding:14px; box-sizing:border-box; gap:8px; }
+  #adm-picker .barra { background:#172033; color:#fff; padding:10px 14px; border-radius:8px; display:flex; align-items:center; gap:12px; font-weight:700; }
+  #adm-picker .barra button { margin-left:auto; border:0; border-radius:6px; padding:8px 14px; cursor:pointer; font-weight:700; }
+  #adm-picker-frame { flex:1; border:0; background:#fff; border-radius:8px; }
+    .adm-box { width:min(1450px,98vw); max-height:95vh; background:#fff; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 18px 55px rgba(0,0,0,.35); }
+    .adm-header { background:#172033; color:#fff; padding:13px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .adm-header h3 { margin:0; font-size:20px; }
+    .adm-header button { border:0; background:#fff; color:#172033; width:36px; height:36px; border-radius:6px; cursor:pointer; font-size:23px; }
+    .adm-body { padding:16px; overflow:auto; }
+    .adm-info { background:#eef4ff; border:1px solid #cbdcf7; border-radius:8px; padding:10px 12px; margin-bottom:14px; font:13px Arial,sans-serif; line-height:1.45; }
+    .adm-table-wrap { overflow:auto; border:1px solid #d8dde5; border-radius:8px; }
+    #adm-permissoes-table { width:100%; min-width:1180px; border-collapse:collapse; font-family:Arial,sans-serif; font-size:12px; }
+    #adm-permissoes-table th { position:sticky; top:0; z-index:2; background:#213966; color:#fff; padding:9px 7px; text-align:center; white-space:nowrap; }
+    #adm-permissoes-table th:first-child { left:0; z-index:3; text-align:left; }
+    #adm-permissoes-table td { border-bottom:1px solid #e8ebef; border-right:1px solid #eef0f3; padding:8px; text-align:center; background:#fff; }
+    #adm-permissoes-table td:first-child { position:sticky; left:0; z-index:1; text-align:left; font-weight:700; background:#f7f9fb; min-width:190px; }
+    #adm-permissoes-table input[type=checkbox] { transform:scale(1.25); cursor:pointer; accent-color:#1f7a45; }
+    .adm-todas-cell { background:#eef7f1 !important; }
+    .adm-actions { display:flex; gap:10px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid #ddd; background:#f6f7f9; }
+    .adm-actions button { border:0; border-radius:7px; padding:10px 16px; font-weight:700; cursor:pointer; }
+    #adm-salvar { background:#1f7a45; color:#fff; }
+    #adm-ativar-tudo { background:#2d78c4; color:#fff; }
+    #adm-desativar-tudo { background:#c0392b; color:#fff; }
+    #adm-sair { background:#59636e; color:#fff; margin-left:auto; }
+
+    /* Abas do painel administrativo */
+    .adm-tabs { display:flex; gap:4px; padding:10px 16px 0; background:#172033; overflow-x:auto; flex-shrink:0; }
+    .adm-tab { border:0; background:rgba(255,255,255,.12); color:#dbe4f5; padding:10px 16px; border-radius:8px 8px 0 0; font:700 13px Arial,sans-serif; cursor:pointer; white-space:nowrap; }
+    .adm-tab:hover { background:rgba(255,255,255,.22); }
+    .adm-tab.ativa { background:#fff; color:#172033; }
+    .adm-pane { display:none; }
+    .adm-pane.ativa { display:block; }
+    #adm-pane-dicas .adm-dicas-area { margin-top:0; border-top:0; padding-top:0; }
+    #adm-presenca-datas { margin:0 !important; }
+    .adm-actions.aba-outra .adm-acao-funcoes { display:none; }
+    /* Função desativada pelo ADM = não fica visível para o usuário */
+    .funcao-bloqueada { display:none !important; }
+
+    /* Aba "Botões e inputs" */
+    .adm-vis-acoes { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .adm-vis-acoes button { border:0; border-radius:7px; padding:9px 14px; font:700 13px Arial,sans-serif; cursor:pointer; color:#fff; }
+    #adm-vis-mostrar-tudo { background:#2d78c4; }
+    #adm-vis-ocultar-tudo { background:#c0392b; }
+    #adm-vis-salvar { background:#1f7a45; margin-left:auto; }
+    #adm-visibilidade-table { width:100%; border-collapse:collapse; font-family:Arial,sans-serif; font-size:13px; }
+    #adm-visibilidade-table th { position:sticky; top:0; z-index:2; background:#213966; color:#fff; padding:9px 10px; text-align:left; }
+    #adm-visibilidade-table th:last-child, #adm-visibilidade-table td:last-child { text-align:center; width:110px; }
+    #adm-visibilidade-table td { border-bottom:1px solid #e8ebef; padding:8px 10px; background:#fff; }
+    #adm-visibilidade-table tr.adm-vis-grupo td { background:#eef4ff; color:#213966; font-weight:800; font-size:12px; letter-spacing:.3px; text-transform:uppercase; }
+    #adm-visibilidade-table input[type=checkbox] { transform:scale(1.25); cursor:pointer; accent-color:#1f7a45; }
+    #adm-visibilidade-table td small { color:#68727e; margin-left:6px; }
+    .adm-dicas-area { margin-top:18px; border-top:2px solid #e2e6ec; padding-top:16px; font-family:Arial,sans-serif; }
+    .adm-dicas-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .adm-dicas-topo h4 { margin:0; color:#172033; font-size:18px; }
+    .adm-dicas-topo button, .adm-dica-form button { border:0; border-radius:7px; padding:9px 13px; font-weight:700; cursor:pointer; }
+    #adm-nova-dica { background:#213966; color:#fff; }
+    .adm-dica-form { display:none; background:#f7f9fc; border:1px solid #d8dde5; border-radius:10px; padding:14px; margin-bottom:14px; }
+    .adm-dica-form.aberto { display:block; }
+    .adm-dica-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .adm-dica-campo { display:flex; flex-direction:column; gap:5px; }
+    .adm-dica-campo.largo { grid-column:1/-1; }
+    .adm-dica-campo label { font:700 12px Arial,sans-serif; color:#39424e; }
+    .adm-dica-campo input, .adm-dica-campo select, .adm-dica-campo textarea { width:100%; box-sizing:border-box; border:1px solid #cbd2dc; border-radius:6px; padding:9px; font:13px Arial,sans-serif; background:#fff; }
+    .adm-dica-campo textarea { min-height:82px; resize:vertical; }
+    .adm-seletor-linha { display:flex; gap:7px; }
+    .adm-seletor-linha input { flex:1; }
+    .adm-seletor-linha button { background:#59636e; color:#fff; white-space:nowrap; }
+    .adm-dica-acoes-form { display:flex; gap:8px; margin-top:13px; }
+    #adm-dica-salvar { background:#1f7a45; color:#fff; }
+    #adm-dica-cancelar { background:#dfe3e8; color:#222; }
+    .adm-dicas-lista { display:grid; gap:9px; }
+    .adm-dica-item { border:1px solid #d8dde5; border-radius:9px; padding:11px 12px; display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; background:#fff; }
+    .adm-dica-item.inativa { opacity:.58; }
+    .adm-dica-item-titulo { font-weight:800; color:#172033; margin-bottom:4px; }
+    .adm-dica-item-meta { font-size:11px; color:#68727e; line-height:1.45; }
+    .adm-dica-item-texto { font-size:12px; color:#333; margin-top:5px; }
+    .adm-dica-item-acoes { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+    .adm-dica-item-acoes button { border:0; border-radius:6px; padding:7px 9px; cursor:pointer; font-weight:700; }
+    .adm-dica-editar { background:#f39c12; color:#fff; }
+    .adm-dica-toggle { background:#2d78c4; color:#fff; }
+    .adm-dica-excluir { background:#c0392b; color:#fff; }
+    .adm-switch { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; }
+    .adm-switch input { width:auto; }
+    .adm-onde-aplicar { margin-top:10px; padding:10px 12px; border:1px solid #d8dde5; border-radius:8px; background:#f8fafc; display:flex; flex-direction:column; gap:7px; }
+    .adm-onde-aplicar-titulo { font-size:12px; font-weight:800; color:#172033; }
+    .adm-onde-aplicar label { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; cursor:pointer; }
+    .adm-onde-aplicar input[type=radio] { width:auto; accent-color:#213966; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="adm-login"><div class="box"><h3 style="margin:0">🔒 Painel Administrativo</h3><input id="adm-login-pin" type="password" placeholder="PIN do administrador" autocomplete="off"><div id="adm-login-erro"></div><button type="button" id="adm-login-ok">Entrar</button></div></div>
+
+<div id="adm-app">
+  <div class="adm-box" style="display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.15)">
+    <div class="adm-header">
+      <h3>⚙️ Painel Administrativo</h3>
+      <div class="adm-alvos"><span style="font-size:13px">Administrar:</span>
+        <button type="button" class="adm-alvo ativa" data-alvo="datas">datas.html</button>
+        <button type="button" class="adm-alvo" data-alvo="index">index.html</button>
+      </div>
+    </div>
+    <div class="adm-tabs" role="tablist">
+      <button type="button" class="adm-tab ativa" role="tab" aria-selected="true" data-aba="funcoes">⚙️ Ativar e Desativar funções</button>
+      <button type="button" class="adm-tab" role="tab" aria-selected="false" data-aba="visibilidade">👁 Botões, inputs, cabeçalhos e div's</button>
+      <button type="button" class="adm-tab" role="tab" aria-selected="false" data-aba="dicas">📢 Dicas e orientações</button>
+      <button type="button" class="adm-tab" role="tab" aria-selected="false" data-aba="monitor">📡 Monitoramento em tempo real</button>
+    </div>
+          <div class="adm-body">
+      <div class="adm-pane ativa" id="adm-pane-funcoes" role="tabpanel">
+        <div class="adm-info">
+          Marque quais tipos de placa podem usar cada função. A coluna <b>TODAS</b> marca ou desmarca todos os tipos daquela função.
+          As configurações são salvas no Firebase e aplicadas em tempo real na página selecionada acima.
+        </div>
+        <div class="adm-table-wrap">
+          <table id="adm-permissoes-table">
+            <thead id="adm-permissoes-head"></thead>
+            <tbody id="adm-permissoes-body"></tbody>
+          </table>
+        </div>
+</div>
+      <div class="adm-pane" id="adm-pane-visibilidade" role="tabpanel">
+        <div class="adm-info">Desmarque o que deve <b>deixar de ficar visível</b> para os usuários da página selecionada e clique em <b>Salvar visibilidade</b>. O efeito é aplicado em tempo real.</div>
+        <div id="adm-divs-box" class="adm-info" style="display:none;background:#fff8ec;border-color:#f1d9a8">
+          <b>Ocultar div's pela classe</b> (somente index.html). Digite o nome da classe, sem o ponto (ex.: <code>editor-area</code>), e clique em Adicionar. Depois use <b>Salvar visibilidade</b>.
+          <div style="display:flex;gap:8px;margin-top:8px"><input id="adm-div-classe" type="text" placeholder="nome-da-classe" style="flex:1;padding:8px;border:1px solid #cbd2dc;border-radius:6px"><button type="button" id="adm-div-add" style="border:0;border-radius:6px;padding:8px 14px;background:#213966;color:#fff;font-weight:700;cursor:pointer">Adicionar</button></div>
+          <div id="adm-div-lista" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+        </div>
+        <div class="adm-vis-acoes">
+          <button type="button" id="adm-vis-mostrar-tudo">✓ Mostrar tudo</button>
+          <button type="button" id="adm-vis-ocultar-tudo">✕ Ocultar tudo</button>
+          <button type="button" id="adm-vis-salvar">💾 Salvar visibilidade</button>
+        </div>
+        <div class="adm-table-wrap">
+          <table id="adm-visibilidade-table">
+            <thead><tr><th>Elemento</th><th>Visível</th></tr></thead>
+            <tbody id="adm-visibilidade-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="adm-pane" id="adm-pane-dicas" role="tabpanel">
+<section class="adm-dicas-area" id="adm-dicas-area">
+          <div class="adm-dicas-topo">
+            <div>
+              <h4>📢 Dicas e orientações</h4>
+              <div style="font-size:12px;color:#68727e;margin-top:3px;">Crie e altere orientações sem editar o código da página.</div>
+            </div>
+            <button type="button" id="adm-nova-dica">+ Nova orientação</button>
+          </div>
+
+          <div class="adm-dica-form" id="adm-dica-form">
+            <input type="hidden" id="adm-dica-id">
+            <div class="adm-dica-grid">
+              <div class="adm-dica-campo"><label>Título</label><input id="adm-dica-titulo" type="text" placeholder="Ex.: Quantidade de cópias"></div>
+              <div class="adm-dica-campo"><label>Tipo</label><select id="adm-dica-tipo"><option value="balao">Balão</option><option value="popup">Pop-up central</option><option value="faixa">Faixa no topo</option></select></div>
+              <div class="adm-dica-campo largo"><label>Texto da orientação</label><textarea id="adm-dica-texto" placeholder="Digite a orientação que o usuário verá..."></textarea></div>
+              <div class="adm-dica-campo largo">
+                <label>🎯 ONDE APONTAR</label>
+                <div class="adm-seletor-linha"><input id="adm-dica-alvo" type="text" placeholder="Digite o seletor CSS ou use o botão 🎯"><button type="button" id="adm-selecionar-alvo">🎯 Selecionar elemento na tela</button></div>
+                <small id="adm-dica-alvo-label" style="color:#68727e"></small>
+                <input type="hidden" id="adm-dica-alvo-unico">
+                <input type="hidden" id="adm-dica-alvo-todos">
+                <div class="adm-onde-aplicar">
+                  <div class="adm-onde-aplicar-titulo">ONDE APLICAR?</div>
+                  <label><input type="radio" name="adm-dica-aplicacao" value="unico" checked> Somente no elemento selecionado</label>
+                  <label><input type="radio" name="adm-dica-aplicacao" value="todos"> Todos os elementos iguais</label>
+                </div>
+              </div>
+              <div class="adm-dica-campo"><label>Duração</label><select id="adm-dica-duracao"><option value="5000">5 segundos</option><option value="10000">10 segundos</option><option value="0">Até o usuário fechar</option></select></div>
+              <div class="adm-dica-campo"><label>Quando mostrar</label><select id="adm-dica-quando"><option value="abrir">Ao abrir a página</option><option value="cartazes">Quando os cartazes carregarem</option><option value="clique">Ao clicar em determinado botão/elemento</option></select></div>
+              <div class="adm-dica-campo largo" id="adm-gatilho-wrap" style="display:none"><label>Elemento que dispara a orientação</label><div class="adm-seletor-linha"><input id="adm-dica-gatilho" type="text" placeholder="Digite o seletor CSS ou use o botão 🎯"><button type="button" id="adm-selecionar-gatilho">🎯 Selecionar gatilho</button></div><small id="adm-dica-gatilho-label" style="color:#68727e"></small></div>
+              <div class="adm-dica-campo"><label>Frequência</label><select id="adm-dica-frequencia"><option value="sempre">Sempre</option><option value="acesso">Uma vez por acesso</option><option value="dispositivo">Uma única vez por dispositivo</option></select></div>
+              <div class="adm-dica-campo"><label>Destaque do elemento</label><select id="adm-dica-destaque"><option value="nenhum">Nenhum</option><option value="piscar">Piscar</option><option value="contorno">Contorno</option><option value="pulsar">Pulsar</option></select></div>
+              <div class="adm-dica-campo"><label>Sequência / grupo</label><input id="adm-dica-sequencia" type="text" placeholder="Ex.: tutorial-impressao (opcional)"></div>
+              <div class="adm-dica-campo"><label>Ordem na sequência</label><input id="adm-dica-ordem" type="number" min="1" step="1" value="1"></div>
+              <div class="adm-dica-campo"><label class="adm-switch"><input id="adm-dica-ativa" type="checkbox" checked> Orientação ativa</label></div>
+            </div>
+            <div class="adm-dica-acoes-form"><button type="button" id="adm-dica-salvar">💾 Salvar orientação</button><button type="button" id="adm-dica-cancelar">Cancelar</button></div>
+          </div>
+          <div class="adm-dicas-lista" id="adm-dicas-lista"><div style="color:#68727e;font-size:12px;">Carregando orientações...</div></div>
+        </section>
+      </div>
+      <div class="adm-pane" id="adm-pane-monitor" role="tabpanel">
+      <section id="adm-presenca-datas" style="margin:18px 0;padding:14px;border:1px solid #cbdcf7;border-radius:10px;background:#f8fbff;">
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+          <h4 style="margin:0 0 6px;color:#213966;font-size:17px;">Monitoramento em tempo real</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" id="adm-presenca-selecionar-todos" style="padding:8px 11px;border:1px solid #b8c7df;border-radius:6px;background:#fff;color:#213966;font-weight:700;cursor:pointer;">☑ Selecionar todos</button>
+            <button type="button" id="adm-presenca-recarregar" style="padding:8px 11px;border:0;border-radius:6px;background:#213966;color:#fff;font-weight:700;cursor:pointer;">↻ Atualizar lista</button>
+            <button type="button" id="adm-presenca-enviar-refresh" style="padding:8px 11px;border:0;border-radius:6px;background:#c0392b;color:#fff;font-weight:700;cursor:pointer;">⟳ Atualizar selecionados</button>
+          </div>
+        </div>
+        <div id="adm-presenca-status" style="font:12px Arial,sans-serif;color:#68727e;margin-bottom:8px;">Aguardando conexão com o Firebase…</div>
+        <div style="overflow:auto;border:1px solid #d8dde5;border-radius:8px;background:#fff;">
+          <table style="width:100%;min-width:760px;border-collapse:collapse;font:12px Arial,sans-serif;">
+            <thead><tr style="background:#213966;color:#fff;">
+              <th style="padding:9px;text-align:center;"><input type="checkbox" id="adm-presenca-check-todos" title="Selecionar todos" aria-label="Selecionar todos"></th>
+              <th style="padding:9px;text-align:left;">Dispositivo / navegador</th>
+              <th style="padding:9px;text-align:left;">Loja identificada</th>
+              <th style="padding:9px;text-align:left;">Início da sessão</th>
+              <th style="padding:9px;text-align:left;">Último sinal</th>
+              <th style="padding:9px;text-align:left;">Estado</th>
+            </tr></thead>
+            <tbody id="adm-presenca-tbody"><tr><td colspan="6" style="padding:12px;color:#68727e;">Carregando sessões…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      </div>
+      </div>
+    <div class="adm-actions" id="adm-actions">
+      <button type="button" id="adm-ativar-tudo" class="adm-acao-funcoes">✓ Ativar tudo</button>
+      <button type="button" id="adm-desativar-tudo" class="adm-acao-funcoes">✕ Desativar tudo</button>
+      <button type="button" id="adm-salvar" class="adm-acao-funcoes">💾 Salvar configuração</button>
+      <button type="button" id="adm-sair">🔒 Sair</button>
+    </div>
+  </div>
+</div>
+
+<div id="adm-picker"><div class="barra">🎯 Clique simples = seleciona o elemento &nbsp;|&nbsp; Ctrl + clique = usa a página normalmente (ex.: escolher o encarte)<button type="button" id="adm-picker-cancelar">Cancelar</button></div><iframe id="adm-picker-frame" title="Página para seleção"></iframe></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// Mesma rotação de projetos Firebase usada pelo datas.html (para ler/gravar no mesmo banco)
+const PROJETOS_FIREBASE = [
+{
+      nome: "Projeto 1",
+      config: {
+  apiKey: "AIzaSyA8cQvVvppensR-CwvP6zBVpWWd-0mNY6Y",
+  authDomain: "salinas-ead30.firebaseapp.com",
+  databaseURL: "https://salinas-ead30-default-rtdb.firebaseio.com",
+  projectId: "salinas-ead30",
+  storageBucket: "salinas-ead30.firebasestorage.app",
+  messagingSenderId: "517926919844",
+  appId: "1:517926919844:web:35f2ea92d4749aaa841031",
+  measurementId: "G-HQ5DVQ2RXR"
+      }
+    },
+    {
+      nome: "Projeto 2",
+      config: {
+
+      }
+    },
+    {
+      nome: "Projeto 3",
+      config: {
+  apiKey: "AIzaSyA8cQvVvppensR-CwvP6zBVpWWd-0mNY6Y",
+  authDomain: "salinas-ead30.firebaseapp.com",
+  databaseURL: "https://salinas-ead30-default-rtdb.firebaseio.com",
+  projectId: "salinas-ead30",
+  storageBucket: "salinas-ead30.firebasestorage.app",
+  messagingSenderId: "517926919844",
+  appId: "1:517926919844:web:35f2ea92d4749aaa841031",
+  measurementId: "G-HQ5DVQ2RXR"
+      }
+    },
+    {
+      nome: "Projeto 4",
+      config: {
+
+      }
+    },
+    {
+      nome: "Projeto 5",
+      config: {
+
+      }
+    },
+  ];
+
+// 168 horas = 7 dias
+const DURACAO_PROJETO_MS = 168 * 60 * 60 * 1000;
+
+// Início do ciclo. Nesta data/hora o Projeto 1 começa seu período.
+// Para mudar quando o ciclo começa, altere somente esta data.
+const INICIO_CICLO_FIREBASE = new Date("2026-09-22T00:00:00-03:00").getTime();
+
+function projetoFirebaseEstaConfigurado(projeto) {
+  const obrigatorios = [
+    projeto.config.apiKey,
+    projeto.config.authDomain,
+    projeto.config.databaseURL,
+    projeto.config.projectId,
+    projeto.config.appId
+  ];
+
+  return obrigatorios.every(valor =>
+    typeof valor === 'string' &&
+    valor.trim() !== '' &&
+    !valor.includes('COLE_AQUI')
+  );
+}
+
+function obterProjetoFirebaseDoPeriodo() {
+  const agora = Date.now();
+  const tempoDecorrido = Math.max(0, agora - INICIO_CICLO_FIREBASE);
+  const periodoAtual = Math.floor(tempoDecorrido / DURACAO_PROJETO_MS);
+  const indiceProgramado = periodoAtual % PROJETOS_FIREBASE.length;
+  const projetoProgramado = PROJETOS_FIREBASE[indiceProgramado];
+
+  // Segurança: se o projeto do período ainda não foi preenchido,
+  // mantém o Projeto 1 para a página não parar de funcionar.
+  if (!projetoFirebaseEstaConfigurado(projetoProgramado)) {
+    console.warn(
+      `[Firebase] ${projetoProgramado.nome} ainda não foi configurado. ` +
+      `Usando temporariamente o Projeto 1.`
+    );
+    return { projeto: PROJETOS_FIREBASE[0], indice: 0, indiceProgramado };
+  }
+
+  return { projeto: projetoProgramado, indice: indiceProgramado, indiceProgramado };
+}
+
+const firebaseSelecionado = obterProjetoFirebaseDoPeriodo();
+const firebaseConfig = firebaseSelecionado.projeto.config;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const $ = id => document.getElementById(id);
+const escHtml = (v='') => String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const ADM_PIN = '2026'; // protege a interface; não substitui as Regras do Firebase
+
+  const ADM_TIPOS = [
+    'PREÇO AVULSO', 'ENCARTE SEMANAL', 'OFERTA DO DIA'
+  ];
+
+  const ADM_FUNCOES = [
+    { id:'salvarNovaData',       nome:'💾 Salvar Nova Data' },
+    { id:'combinarCartazes',     nome:'📄 Combinar Cartazes' },
+    { id:'juntarTodos',          nome:'📄 Juntar Todos (PDF único)' },
+    { id:'previewEditor',        nome:'👁 Prévia / Editor do PDF' },
+    { id:'visualizar',           nome:'👁 Visualizar cartaz' },
+    { id:'editar',               nome:'✏️ Editar cartaz' },
+    { id:'baixar',               nome:'⬇️ Baixar cartaz' },
+    { id:'excluir',              nome:'🗑️ Excluir cartaz' },
+    { id:'excluirSelecionados',  nome:'🗑️ Excluir Selecionados' },
+    { id:'excluirIntervalo',     nome:'🗑️ Excluir por Intervalo' }
+  ];
+
+  // ============================================================
+  // MODO ADM - VISIBILIDADE DE BOTÕES E INPUTS
+  // Desativado = oculto para o usuário. O ADM continua vendo (contorno tracejado).
+  // `wrap` = container que também deve sumir junto (label + campo).
+  // ============================================================
+  const ADM_CONTROLES = [
+    { grupo:'Botões — ações principais', id:'btnSalvarLote',         nome:'💾 Salvar Nova Data',          sel:'#btn-salvar-lote' },
+    { grupo:'Botões — ações principais', id:'btnUnirCartazes',       nome:'📄 2 páginas por folha',       sel:'#btn-unir-cartazes' },
+    { grupo:'Botões — ações principais', id:'btnJuntarTodos',        nome:'📄 1 página por folha',        sel:'#btn-juntar-todos' },
+    { grupo:'Botões — ações principais', id:'btnExcluirSelecionados',nome:'🗑️ Excluir Selecionados',      sel:'#btn-excluir-selecionados' },
+    { grupo:'Botões — ações principais', id:'btnDesmarcarTodos',     nome:'Desmarcar todos',              sel:'#btn-desmarcar-todos' },
+    { grupo:'Botões — ações principais', id:'btnSuporte',            nome:'💬 Fale com o suporte',        sel:'#btn-fale-com-suporte' },
+    { grupo:'Botões — linha do cartaz',  id:'btnVisualizar',         nome:'👁 Visualizar',                sel:'.btn-visualizar' },
+    { grupo:'Botões — linha do cartaz',  id:'btnEditar',             nome:'✏️ Editar',                    sel:'.btn-editar' },
+    { grupo:'Botões — linha do cartaz',  id:'btnBaixar',             nome:'⬇️ Baixar',                    sel:'.btn-baixar' },
+    { grupo:'Botões — linha do cartaz',  id:'btnExcluir',            nome:'🗑️ Excluir',                   sel:'.btn-excluir' },
+    { grupo:'Botões — paginação',        id:'btnPrimeira',           nome:'Primeira',                     sel:'#first-page' },
+    { grupo:'Botões — paginação',        id:'btnAnterior',           nome:'Anterior',                     sel:'#prev-page' },
+    { grupo:'Botões — paginação',        id:'btnProxima',            nome:'Próxima',                      sel:'#next-page' },
+    { grupo:'Botões — paginação',        id:'btnUltima',             nome:'Última',                       sel:'#last-page' },
+    { grupo:'Inputs — nova data',        id:'inpLoteDataInicial',    nome:'Nova Data Inicial',            sel:'#lote-data-inicial', wrap:'.field-data' },
+    { grupo:'Inputs — nova data',        id:'inpLoteDataFinal',      nome:'Nova Data Final',              sel:'#lote-data-final',   wrap:'.field-data' },
+    { grupo:'Inputs — filtros',          id:'inpFiltroTipo',         nome:'Buscar por Tipo',              sel:'#filtro-tipo',          wrap:'.field-data' },
+    { grupo:'Inputs — filtros',          id:'inpFiltroDescricao',    nome:'Buscar por Descrição',         sel:'#filtro-descricao',     wrap:'.field-data' },
+    { grupo:'Inputs — filtros',          id:'inpFiltroPreco',        nome:'Buscar por Preço',             sel:'#filtro-preco',         wrap:'.field-data' },
+    { grupo:'Inputs — filtros',          id:'inpFiltroVigencia',     nome:'Buscar por Vigência',          sel:'#filtro-vigencia-final',wrap:'.field-data' },
+    { grupo:'Inputs — filtros',          id:'inpFiltroLoja',         nome:'Buscar por Loja',              sel:'#filtro-loja',          wrap:'.field-data' },
+    { grupo:'Inputs — tabela',           id:'inpSelecionarTodos',    nome:'☑ Selecionar todos (cabeçalho)', sel:'#select-all-cartazes' },
+    { grupo:'Inputs — tabela',           id:'inpSelecionarLinha',    nome:'☑ Seleção do cartaz (linha)',  sel:'.cartaz-select-item' },
+    { grupo:'Inputs — tabela',           id:'inpCopias',             nome:'Quantidade de cópias (linha)', sel:'.input-quantidade-copias' },
+    { grupo:'Cabeçalhos da tabela',      id:'colSelecao', nome:'☑ Coluna de seleção', sel:'th.col-checkbox, td.col-checkbox' },
+    { grupo:'Cabeçalhos da tabela',      id:'colDescricao', nome:'Coluna Descrição', sel:'th[data-sort="descricao"], td.col-descricao' },
+    { grupo:'Cabeçalhos da tabela',      id:'colTipo', nome:'Coluna Tipo', sel:'th[data-sort="tipo"], td.col-tipo' },
+    { grupo:'Cabeçalhos da tabela',      id:'colVigencia', nome:'Coluna Data de Vigência', sel:'th[data-sort="vigencia"], td.col-vigencia' },
+    { grupo:'Cabeçalhos da tabela',      id:'colPreco', nome:'Coluna Preço', sel:'th[data-sort="preco"], td.col-preco' },
+    { grupo:'Cabeçalhos da tabela',      id:'colLoja', nome:'Coluna Loja', sel:'th[data-sort="loja"], td.col-loja' },
+    { grupo:'Cabeçalhos da tabela',      id:'colSalvo', nome:'Coluna Salvo em', sel:'th[data-sort="salvo"], td.col-salvo' },
+    { grupo:'Cabeçalhos da tabela',      id:'colAcoes', nome:'Coluna AÇÕES / CÓPIAS', sel:'th.col-acoes, td.col-acoes' }
+  ];
+  function admRegrasControle(c) {
+    const r = [c.sel];
+    if (c.wrap) {
+      r.push(`${c.wrap}:has(${c.sel})`);
+      if (c.sel.startsWith('#')) r.push(`label[for="${c.sel.slice(1)}"]`);
+    }
+    return r;
+  }
+
+// ===== Funções e controles do index.html =====
+const IDX_FUNCOES = [
+  { id:'adicionarPlaca',  nome:'➕ Adicionar placa',                    sels:['#btn-add-cartaz'] },
+  { id:'salvarTexto',     nome:'💾 Salvar cartaz (somente texto)',      sels:['[id^="save-cartaz"]'] },
+  { id:'salvarImagem',    nome:'💾 Salvar cartaz (texto e imagem)',     sels:['[id^="save-image-cartaz"]'] },
+  { id:'salvarTodos',     nome:'💾 Salvar todos os cartazes',           sels:['#btn-salvar-todos-congelado'] },
+  { id:'ajustarFonte',    nome:'🔠 Aumentar / diminuir fonte',          sels:['[id^="font-increase"]','[id^="font-decrease"]'] },
+  { id:'moverDescricao',  nome:'↕️ Mover descrição para cima / baixo',  sels:['[id^="move-up"]','[id^="move-down"]'] },
+  { id:'menuLateral',     nome:'☰ Menu lateral',                        sels:['#menu-lateral-toggle'] }
+];
+const IDX_CONTROLES = [
+  { grupo:'Botões — principais', id:'btnAdd',        nome:'➕ Adicionar placa',            sel:'#btn-add-cartaz' },
+  { grupo:'Botões — principais', id:'btnSalvarTodos',nome:'💾 Salvar todos os cartazes',   sel:'#btn-salvar-todos-congelado' },
+  { grupo:'Botões — principais', id:'btnMenu',       nome:'☰ Menu lateral',                sel:'#menu-lateral-toggle' },
+  { grupo:'Botões — de cada cartaz', id:'btnSalvarTexto',  nome:'💾 Salvar cartaz (somente texto)',  sel:'[id^="save-cartaz"]' },
+  { grupo:'Botões — de cada cartaz', id:'btnSalvarImagem', nome:'💾 Salvar cartaz (texto e imagem)', sel:'[id^="save-image-cartaz"]' },
+  { grupo:'Botões — de cada cartaz', id:'btnFonteMais',    nome:'A+ Aumentar fonte',  sel:'[id^="font-increase"]' },
+  { grupo:'Botões — de cada cartaz', id:'btnFonteMenos',   nome:'A- Diminuir fonte',  sel:'[id^="font-decrease"]' },
+  { grupo:'Botões — de cada cartaz', id:'btnSobe',         nome:'⬆ Mover descrição para cima',  sel:'[id^="move-up"]' },
+  { grupo:'Botões — de cada cartaz', id:'btnDesce',        nome:'⬇ Mover descrição para baixo', sel:'[id^="move-down"]' },
+  { grupo:'Inputs — de cada cartaz', id:'inpBarras',   nome:'Código de barras',  sel:'[id^="barcode-input"]' },
+  { grupo:'Inputs — de cada cartaz', id:'inpDescricao',nome:'Descrição',         sel:'[id^="descricao"]',     wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpPrecoAnt', nome:'Preço antigo',      sel:'[id^="preco-antigo"]',  wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpPrecoOf',  nome:'Preço oferta',      sel:'[id^="preco-oferta"]',  wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpDataIni',  nome:'Data inicial',      sel:'[id^="data-inicial"]',  wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpDataFim',  nome:'Data final',        sel:'[id^="data-final"]',    wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpCada',     nome:'Cada',              sel:'[id^="cada"]',          wrap:'.field' },
+  { grupo:'Inputs — de cada cartaz', id:'inpRodape',   nome:'Rodapé',            sel:'[id^="rodape"]',        wrap:'.field' },
+  { grupo:'Cabeçalhos', id:'cabTitulos', nome:'Títulos de seção (h3)',     sel:'.editor-par h3, #editor-area h3, h3' },
+  { grupo:'Cabeçalhos', id:'cabSalvos',  nome:'Título "Cartazes salvos" (h4)', sel:'#saved-list h4' }
+];
+
+const T = {
+  datas: { url:'datas.html', perm:'permissoesDatas',  vis:'visibilidadeDatas',  dicas:'dicasOrientacao',      funcs:ADM_FUNCOES, ctrls:ADM_CONTROLES },
+  index: { url:'index.html', perm:'permissoesIndex',  vis:'visibilidadeIndex',  dicas:'dicasOrientacaoIndex', divs:'divsOcultasIndex', funcs:IDX_FUNCOES, ctrls:IDX_CONTROLES }
+};
+let alvo = sessionStorage.getItem('admAlvo') === 'index' ? 'index' : 'datas';
+const cfgRef = k => ref(db, 'configuracoes/' + T[alvo][k]);
+const estado = { perm:{}, vis:{}, divs:[] };
+let unsubs = [];
+
+  function admNormalizarElementoSelecionado(el) {
+    if (!el) return null;
+    // Se clicar no SVG, path, IMG, SPAN etc. de um controle, usa o controle inteiro.
+    return el.closest('button,a,input,select,textarea,label,th,td,[role="button"]') || el;
+  }
+
+  function admClassesUteis(el) {
+    return [...(el?.classList || [])].filter(c =>
+      !c.startsWith('adm-') &&
+      !c.startsWith('orientacao-') &&
+      c !== 'funcao-bloqueada' &&
+      c !== 'ativo' && c !== 'visivel' && c !== 'aberto'
+    );
+  }
+
+  // Seletor para "TODOS OS ELEMENTOS IGUAIS".
+  // Aqui a classe compartilhada tem prioridade sobre ID, pois o objetivo é alcançar o grupo.
+  function admSelectorElemento(el) {
+    el = admNormalizarElementoSelecionado(el);
+    if (!el || el === el.ownerDocument.body || el === el.ownerDocument.documentElement) return '';
+    const classes = admClassesUteis(el);
+    const preferidas = ['input-quantidade-copias','btn-visualizar','btn-editar','btn-baixar','btn-excluir','cartaz-select-item','input-filtro','btn-salvar-lote','btn-paginacao'];
+    const pref = preferidas.find(c => classes.includes(c));
+    if (pref) return `.${CSS.escape(pref)}`;
+    if (classes.length) return `${el.tagName.toLowerCase()}.${classes.slice(0,2).map(CSS.escape).join('.')}`;
+    if (el.id) return `#${CSS.escape(el.id)}`;
+    return el.tagName.toLowerCase();
+  }
+
+  function admSelectorElementoUnico(el) {
+    el = admNormalizarElementoSelecionado(el);
+    if (!el || el === el.ownerDocument.body || el === el.ownerDocument.documentElement) return '';
+    if (el.id) return `#${CSS.escape(el.id)}`;
+    if (el.dataset && el.dataset.id) {
+      const classe = [...el.classList].find(c => !c.startsWith('adm-') && !c.startsWith('orientacao-'));
+      if (classe) return `.${CSS.escape(classe)}[data-id="${CSS.escape(el.dataset.id)}"]`;
+      return `${el.tagName.toLowerCase()}[data-id="${CSS.escape(el.dataset.id)}"]`;
+    }
+    const partes=[];
+    let atual=el;
+    while(atual && atual!==el.ownerDocument.body && partes.length<5){
+      if(atual.id){ partes.unshift(`#${CSS.escape(atual.id)}`); break; }
+      let parte=atual.tagName.toLowerCase();
+      const pai=atual.parentElement;
+      if(pai){
+        const iguais=[...pai.children].filter(x=>x.tagName===atual.tagName);
+        if(iguais.length>1) parte += `:nth-of-type(${iguais.indexOf(atual)+1})`;
+      }
+      partes.unshift(parte); atual=pai;
+    }
+    return partes.join(' > ');
+  }
+
+  function admAtualizarAlvoPorAplicacao() {
+    const modo=document.querySelector('input[name="adm-dica-aplicacao"]:checked')?.value || 'unico';
+    const unico=document.getElementById('adm-dica-alvo-unico').value;
+    const todos=document.getElementById('adm-dica-alvo-todos').value;
+    document.getElementById('adm-dica-alvo').value = modo==='todos' ? (todos||unico) : (unico||todos);
+  }
+
+  function admRotuloElemento(el) {
+    if (!el) return '';
+    return (el.getAttribute('title') || el.getAttribute('aria-label') || el.innerText || el.value || el.placeholder || el.id || el.className || el.tagName).toString().trim().replace(/\s+/g,' ').slice(0,120);
+  }
+
+// ===== Funções por tipo de placa =====
+function montarPerm() {
+  $('adm-permissoes-head').innerHTML = `<tr><th>FUNÇÃO</th><th class="adm-todas-cell">TODAS</th>${ADM_TIPOS.map(t => `<th>${t === 'PREÇO AVULSO' ? 'PLACA AVULSA' : t}</th>`).join('')}</tr>`;
+  $('adm-permissoes-body').innerHTML = T[alvo].funcs.map(f => {
+    const p = estado.perm[f.id] || {};
+    const todos = ADM_TIPOS.every(t => p[t] !== false);
+    return `<tr data-funcao="${f.id}"><td>${f.nome}</td><td class="adm-todas-cell"><input type="checkbox" class="adm-check-todas" ${todos?'checked':''}></td>${ADM_TIPOS.map(t => `<td><input type="checkbox" class="adm-check-tipo" data-tipo="${t}" ${p[t] !== false ? 'checked' : ''}></td>`).join('')}</tr>`;
+  }).join('');
+}
+$('adm-permissoes-body').addEventListener('change', e => {
+  const tr = e.target.closest('tr'); if (!tr) return;
+  if (e.target.classList.contains('adm-check-todas')) tr.querySelectorAll('.adm-check-tipo').forEach(c => c.checked = e.target.checked);
+  else if (e.target.classList.contains('adm-check-tipo')) tr.querySelector('.adm-check-todas').checked = [...tr.querySelectorAll('.adm-check-tipo')].every(c => c.checked);
+});
+const marcarPerm = v => document.querySelectorAll('#adm-permissoes-body input[type=checkbox]').forEach(c => c.checked = v);
+$('adm-ativar-tudo').onclick = () => marcarPerm(true);
+$('adm-desativar-tudo').onclick = () => marcarPerm(false);
+$('adm-salvar').onclick = async () => {
+  const novo = {};
+  document.querySelectorAll('#adm-permissoes-body tr').forEach(tr => {
+    const f = tr.dataset.funcao; novo[f] = {};
+    tr.querySelectorAll('.adm-check-tipo').forEach(c => novo[f][c.dataset.tipo] = c.checked);
+  });
+  if (alvo === 'index') { // o index.html usa este mapa para bloquear o clique de cada função
+    novo.__map = {}; IDX_FUNCOES.forEach(f => novo.__map[f.id] = f.sels);
+  }
+  try { await update(cfgRef('perm'), novo); alert('Configuração salva com sucesso!'); }
+  catch (err) { console.error(err); alert('Não foi possível salvar. Verifique as regras do Firebase.'); }
+};
+
+// ===== Visibilidade (botões, inputs, cabeçalhos e div's) =====
+function montarVis() {
+  let grupo = '';
+  $('adm-visibilidade-body').innerHTML = T[alvo].ctrls.map(c => {
+    let cab = '';
+    if (c.grupo !== grupo) { grupo = c.grupo; cab = `<tr class="adm-vis-grupo"><td colspan="2">${c.grupo}</td></tr>`; }
+    return `${cab}<tr data-controle="${c.id}"><td>${c.nome}</td><td><input type="checkbox" class="adm-check-visivel" ${estado.vis[c.id] !== false ? 'checked' : ''}></td></tr>`;
+  }).join('');
+  $('adm-divs-box').style.display = T[alvo].divs ? 'block' : 'none';
+  montarDivs();
+}
+function montarDivs() {
+  $('adm-div-lista').innerHTML = estado.divs.map((c, i) => `<span style="background:#fde3e0;border:1px solid #e6a7a0;border-radius:14px;padding:4px 10px;font:12px Arial">.${escHtml(c)} <b data-rm="${i}" style="cursor:pointer;margin-left:6px">×</b></span>`).join('') || '<small style="color:#68727e">Nenhuma classe oculta.</small>';
+}
+$('adm-div-add').onclick = () => {
+  const c = $('adm-div-classe').value.trim().replace(/^\./, '');
+  if (!/^[A-Za-z_][\w-]*$/.test(c)) { alert('Digite apenas o nome de UMA classe (letras, números, - e _), sem ponto.'); return; }
+  if (!estado.divs.includes(c)) estado.divs.push(c);
+  $('adm-div-classe').value = ''; montarDivs();
+};
+$('adm-div-lista').onclick = e => { if (e.target.dataset.rm) { estado.divs.splice(+e.target.dataset.rm, 1); montarDivs(); } };
+const marcarVis = v => document.querySelectorAll('#adm-visibilidade-body .adm-check-visivel').forEach(c => c.checked = v);
+$('adm-vis-mostrar-tudo').onclick = () => marcarVis(true);
+$('adm-vis-ocultar-tudo').onclick = () => marcarVis(false);
+$('adm-vis-salvar').onclick = async () => {
+  const novo = {}; const css = [];
+  document.querySelectorAll('#adm-visibilidade-body tr[data-controle]').forEach(tr => {
+    const id = tr.dataset.controle, vis = tr.querySelector('.adm-check-visivel').checked;
+    novo[id] = vis;
+    if (!vis) css.push(...admRegrasControle(T[alvo].ctrls.find(c => c.id === id)));
+  });
+  if (alvo === 'index') novo.__css = css; // regras prontas que o index.html aplica
+  try {
+    await set(cfgRef('vis'), novo);
+    if (T[alvo].divs) await set(cfgRef('divs'), estado.divs);
+    alert('Visibilidade salva com sucesso!');
+  } catch (err) { console.error(err); alert('Não foi possível salvar. Verifique as regras do Firebase.'); }
+};
+
+// ===== Seleção de elemento (a página alvo abre em um quadro dentro do painel) =====
+let campoSel = null, hoverEl = null;
+function fecharPicker() {
+  if (hoverEl) hoverEl.style.removeProperty('outline'); hoverEl = null; campoSel = null;
+  $('adm-picker').style.display = 'none'; $('adm-picker-frame').src = 'about:blank';
+}
+function admIniciarSelecao(campo) {
+  campoSel = campo; $('adm-picker').style.display = 'flex';
+  const fr = $('adm-picker-frame');
+  fr.onload = () => {
+    let doc; try { doc = fr.contentDocument; void doc.body; } catch (_e) { alert('O navegador bloqueou a seleção na página. Digite o seletor CSS manualmente no campo.'); fecharPicker(); return; }
+    if (!doc || !doc.body) return;
+    const livre = ev => ev.ctrlKey || ev.metaKey; // Ctrl pressionado = a página funciona normalmente
+    ['mousedown','mouseup','pointerdown','pointerup','touchstart'].forEach(t => doc.addEventListener(t, ev => { if (!livre(ev)) { ev.stopPropagation(); } }, true));
+    doc.addEventListener('mouseover', e => { if (livre(e)) { if (hoverEl) hoverEl.style.removeProperty('outline'); hoverEl = null; return; } if (hoverEl) hoverEl.style.removeProperty('outline'); hoverEl = e.target; hoverEl.style.outline = '4px solid #ff8a1c'; }, true);
+    doc.addEventListener('click', e => {
+      if (livre(e)) return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      const el = admNormalizarElementoSelecionado(e.target), seletor = admSelectorElemento(el);
+      if (!seletor) return;
+      if (campoSel === 'alvo') {
+        $('adm-dica-alvo-unico').value = admSelectorElementoUnico(el);
+        $('adm-dica-alvo-todos').value = seletor; admAtualizarAlvoPorAplicacao();
+        const qtd = (() => { try { return doc.querySelectorAll(seletor).length; } catch (_e) { return 1; } })();
+        $('adm-dica-alvo-label').textContent = `Selecionado: ${admRotuloElemento(el)}  •  ${seletor}  •  ${qtd} elemento(s) igual(is)`;
+      } else {
+        $('adm-dica-gatilho').value = seletor;
+        $('adm-dica-gatilho-label').textContent = `Selecionado: ${admRotuloElemento(el)}  •  ${seletor}`;
+      }
+      fecharPicker();
+    }, true);
+  };
+  fr.src = T[alvo].url + '?admin-preview=1';
+}
+$('adm-picker-cancelar').onclick = fecharPicker;
+
+// ===== Dicas e orientações =====
+  function admLimparFormularioDica() {
+    document.getElementById('adm-dica-id').value='';
+    document.getElementById('adm-dica-titulo').value='';
+    document.getElementById('adm-dica-texto').value='';
+    document.getElementById('adm-dica-tipo').value='balao';
+    document.getElementById('adm-dica-alvo').value='';
+    document.getElementById('adm-dica-alvo-unico').value='';
+    document.getElementById('adm-dica-alvo-todos').value='';
+    document.querySelector('input[name="adm-dica-aplicacao"][value="unico"]').checked=true;
+    document.getElementById('adm-dica-alvo-label').textContent='';
+    document.getElementById('adm-dica-duracao').value='10000';
+    document.getElementById('adm-dica-quando').value='abrir';
+    document.getElementById('adm-dica-gatilho').value='';
+    document.getElementById('adm-dica-gatilho-label').textContent='';
+    document.getElementById('adm-dica-frequencia').value='acesso';
+    document.getElementById('adm-dica-destaque').value='contorno';
+    document.getElementById('adm-dica-sequencia').value='';
+    document.getElementById('adm-dica-ordem').value='1';
+    document.getElementById('adm-dica-ativa').checked=true;
+    admAtualizarCampoGatilho();
+  }
+
+  function admAtualizarCampoGatilho() {
+    document.getElementById('adm-gatilho-wrap').style.display = document.getElementById('adm-dica-quando').value === 'clique' ? 'flex' : 'none';
+  }
+
+  function admAbrirFormularioDica(dica=null) {
+    admLimparFormularioDica();
+    if (dica) {
+      document.getElementById('adm-dica-id').value=dica.id || '';
+      document.getElementById('adm-dica-titulo').value=dica.titulo || '';
+      document.getElementById('adm-dica-texto').value=dica.texto || '';
+      document.getElementById('adm-dica-tipo').value=dica.tipo || 'balao';
+      document.getElementById('adm-dica-alvo-unico').value=dica.alvoUnico || dica.alvo || '';
+      document.getElementById('adm-dica-alvo-todos').value=dica.alvoTodos || dica.alvo || '';
+      const aplicacao=dica.aplicacao || 'unico';
+      const radioAplicacao=document.querySelector(`input[name="adm-dica-aplicacao"][value="${aplicacao}"]`);
+      if(radioAplicacao) radioAplicacao.checked=true;
+      admAtualizarAlvoPorAplicacao();
+      document.getElementById('adm-dica-alvo-label').textContent=dica.alvoLabel ? `Selecionado: ${dica.alvoLabel}  •  ${dica.alvo||''}` : '';
+      document.getElementById('adm-dica-duracao').value=String(dica.duracao ?? 10000);
+      document.getElementById('adm-dica-quando').value=dica.quando || 'abrir';
+      document.getElementById('adm-dica-gatilho').value=dica.gatilho || '';
+      document.getElementById('adm-dica-gatilho-label').textContent=dica.gatilhoLabel ? `Selecionado: ${dica.gatilhoLabel}  •  ${dica.gatilho||''}` : '';
+      document.getElementById('adm-dica-frequencia').value=dica.frequencia || 'acesso';
+      document.getElementById('adm-dica-destaque').value=dica.destaque || 'nenhum';
+      document.getElementById('adm-dica-sequencia').value=dica.sequencia || '';
+      document.getElementById('adm-dica-ordem').value=dica.ordem || 1;
+      document.getElementById('adm-dica-ativa').checked=dica.ativa !== false;
+      admAtualizarCampoGatilho();
+    }
+    document.getElementById('adm-dica-form').classList.add('aberto');
+    document.getElementById('adm-dica-titulo').focus();
+  }
+
+  function admRenderizarDicas() {
+    const lista = document.getElementById('adm-dicas-lista');
+    const dicas = Object.entries(window.__dicasOrientacao || {}).map(([id,d])=>({id,...d})).sort((a,b)=>(a.sequencia||'').localeCompare(b.sequencia||'') || Number(a.ordem||1)-Number(b.ordem||1));
+    if (!dicas.length) { lista.innerHTML='<div style="padding:12px;border:1px dashed #cbd2dc;border-radius:8px;color:#68727e;font-size:12px;">Nenhuma orientação cadastrada. Clique em <b>+ Nova orientação</b>.</div>'; return; }
+    lista.innerHTML=dicas.map(d=>`<div class="adm-dica-item ${d.ativa===false?'inativa':''}" data-id="${escHtml(d.id)}"><div><div class="adm-dica-item-titulo">${d.ativa===false?'⚪':'🟢'} ${escHtml(d.titulo||'Sem título')}</div><div class="adm-dica-item-meta">${escHtml(d.tipo||'balao')} • ${escHtml(d.quando||'abrir')} • ${escHtml(d.frequencia||'sempre')} • ${d.aplicacao==='todos'?'todos os elementos iguais':'somente o selecionado'}${d.sequencia?` • sequência: ${escHtml(d.sequencia)} #${Number(d.ordem||1)}`:''}</div><div class="adm-dica-item-texto">${escHtml(d.texto||'')}</div></div><div class="adm-dica-item-acoes"><button class="adm-dica-editar">Editar</button><button class="adm-dica-toggle">${d.ativa===false?'Ativar':'Desativar'}</button><button class="adm-dica-excluir">Excluir</button></div></div>`).join('');
+  }
+
+  $('adm-nova-dica').addEventListener('click',()=>admAbrirFormularioDica());
+  document.getElementById('adm-dica-cancelar').addEventListener('click',()=>document.getElementById('adm-dica-form').classList.remove('aberto'));
+  document.getElementById('adm-dica-quando').addEventListener('change',admAtualizarCampoGatilho);
+  document.getElementById('adm-selecionar-alvo').addEventListener('click',()=>admIniciarSelecao('alvo'));
+  document.getElementById('adm-selecionar-gatilho').addEventListener('click',()=>admIniciarSelecao('gatilho'));
+  document.querySelectorAll('input[name="adm-dica-aplicacao"]').forEach(r=>r.addEventListener('change',admAtualizarAlvoPorAplicacao));
+
+  document.getElementById('adm-dica-salvar').addEventListener('click', async () => {
+    const idExistente=document.getElementById('adm-dica-id').value.trim();
+    const titulo=document.getElementById('adm-dica-titulo').value.trim();
+    const textoDica=document.getElementById('adm-dica-texto').value.trim();
+    const tipo=document.getElementById('adm-dica-tipo').value;
+    admAtualizarAlvoPorAplicacao();
+    const alvo=document.getElementById('adm-dica-alvo').value.trim();
+    const aplicacao=document.querySelector('input[name="adm-dica-aplicacao"]:checked')?.value || 'unico';
+    const alvoUnico=document.getElementById('adm-dica-alvo-unico').value.trim();
+    const alvoTodos=document.getElementById('adm-dica-alvo-todos').value.trim();
+    const quando=document.getElementById('adm-dica-quando').value;
+    const gatilho=document.getElementById('adm-dica-gatilho').value.trim();
+    if (!titulo || !textoDica) { alert('Preencha o título e o texto da orientação.'); return; }
+    if (tipo === 'balao' && !alvo) { alert('Para uma orientação do tipo Balão, selecione onde ela deve apontar.'); return; }
+    if (quando === 'clique' && !gatilho) { alert('Selecione o elemento que deverá disparar a orientação ao ser clicado.'); return; }
+    const id=idExistente || `dica_${Date.now()}`;
+    const dica={
+      titulo, texto:textoDica, tipo, alvo, aplicacao, alvoUnico, alvoTodos,
+      alvoLabel:document.getElementById('adm-dica-alvo-label').textContent.replace(/^Selecionado:\s*/,'').split('  •  ')[0],
+      duracao:Number(document.getElementById('adm-dica-duracao').value), quando, gatilho,
+      gatilhoLabel:document.getElementById('adm-dica-gatilho-label').textContent.replace(/^Selecionado:\s*/,'').split('  •  ')[0],
+      frequencia:document.getElementById('adm-dica-frequencia').value,
+      destaque:document.getElementById('adm-dica-destaque').value,
+      sequencia:document.getElementById('adm-dica-sequencia').value.trim(),
+      ordem:Math.max(1,parseInt(document.getElementById('adm-dica-ordem').value,10)||1),
+      ativa:document.getElementById('adm-dica-ativa').checked,
+      atualizadoEm:Date.now()
+    };
+    try { await update(cfgRef('dicas'),{[id]:dica}); document.getElementById('adm-dica-form').classList.remove('aberto'); alert('Orientação salva com sucesso!'); }
+    catch(err){ console.error(err); alert('Não foi possível salvar a orientação no Firebase.'); }
+  });
+
+  document.getElementById('adm-dicas-lista').addEventListener('click', async e => {
+    const item=e.target.closest('.adm-dica-item'); if(!item) return;
+    const id=item.dataset.id, dica=window.__dicasOrientacao?.[id]; if(!dica) return;
+    if(e.target.classList.contains('adm-dica-editar')) admAbrirFormularioDica({id,...dica});
+    if(e.target.classList.contains('adm-dica-toggle')) { try{ await update(ref(db,`configuracoes/${T[alvo].dicas}/${id}`),{ativa:dica.ativa===false, atualizadoEm:Date.now()}); }catch(err){alert('Não foi possível alterar o estado da orientação.');} }
+    if(e.target.classList.contains('adm-dica-excluir')) { if(confirm(`Excluir a orientação "${dica.titulo||'Sem título'}"?`)) { try{ await remove(ref(db,`configuracoes/${T[alvo].dicas}/${id}`)); }catch(err){alert('Não foi possível excluir a orientação.');} } }
+  });
+
+// Quando o seletor é digitado à mão, ele vale para "um" e "todos"
+$('adm-dica-alvo').addEventListener('input', e => { $('adm-dica-alvo-unico').value = e.target.value.trim(); $('adm-dica-alvo-todos').value = e.target.value.trim(); });
+
+// ===== Monitoramento (presença das páginas datas.html) =====
+const DATAS_PRESENCA_TIMEOUT_MS = 90000;
+let datasPresenceUnsubscribe = null, datasPresenceTimerRender = null;
+  function datasPresenceEscape(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function datasPresenceRenderizar(dados) {
+    const tbody = document.getElementById('adm-presenca-tbody');
+    const status = document.getElementById('adm-presenca-status');
+    if (!tbody || !status) return;
+    const agora = Date.now();
+    const sessoes = Object.entries(dados || {})
+      .map(([id, item]) => ({ id, ...(item || {}) }))
+      .filter(item => Number(item.ultimaAtividade || 0) > 0 && agora - Number(item.ultimaAtividade) <= DATAS_PRESENCA_TIMEOUT_MS)
+      .sort((a, b) => Number(b.ultimaAtividade || 0) - Number(a.ultimaAtividade || 0));
+    status.textContent = `${sessoes.length} sessão(ões) online com esta página aberta.`;
+    if (!sessoes.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:12px;color:#68727e;">Nenhuma sessão online identificada neste momento.</td></tr>';
+      const todos = document.getElementById('adm-presenca-check-todos'); if (todos) todos.checked = false;
+      return;
+    }
+    tbody.innerHTML = sessoes.map(sessao => {
+      const agente = String(sessao.userAgent || 'Navegador desconhecido');
+      const dispositivo = agente.length > 95 ? agente.slice(0, 92) + '…' : agente;
+      const inicio = sessao.inicioEm ? new Date(Number(sessao.inicioEm)).toLocaleString('pt-BR') : 'Indisponível';
+      const ultima = new Date(Number(sessao.ultimaAtividade)).toLocaleTimeString('pt-BR');
+      return `<tr style="border-top:1px solid #e8ebef;">
+        <td style="padding:9px;text-align:center;"><input type="checkbox" class="adm-presenca-selecao" data-presence-id="${datasPresenceEscape(sessao.id)}" aria-label="Selecionar dispositivo ${datasPresenceEscape(dispositivo)}"></td>
+        <td style="padding:9px;max-width:340px;overflow-wrap:anywhere;"><b>${datasPresenceEscape(dispositivo)}</b><br><small style="color:#68727e;">ID: ${datasPresenceEscape(sessao.sessionId || sessao.id)}</small></td>
+        <td style="padding:9px;">${datasPresenceEscape(sessao.loja || 'Não identificada')}</td>
+        <td style="padding:9px;white-space:nowrap;">${datasPresenceEscape(inicio)}</td>
+        <td style="padding:9px;white-space:nowrap;">${datasPresenceEscape(ultima)}</td>
+        <td style="padding:9px;color:#1f7a45;font-weight:700;white-space:nowrap;">● ONLINE</td>
+      </tr>`;
+    }).join('');
+  }
+  function datasPresenceIniciarMonitoramento() {
+    if (datasPresenceUnsubscribe) return;
+    const monitorRef = ref(db, 'presencaDatas');
+    datasPresenceUnsubscribe = onValue(monitorRef, snap => {
+      datasPresenceUltimosDados = snap.val() || {};
+      datasPresenceRenderizar(datasPresenceUltimosDados);
+      if (datasPresenceTimerRender) clearInterval(datasPresenceTimerRender);
+      // Atualiza os tempos e remove visualmente registros que pararam de enviar heartbeat.
+      datasPresenceTimerRender = setInterval(() => {
+        const status = document.getElementById('adm-presenca-status');
+        if (status && true) {
+          // O próximo evento Firebase atualiza a lista; o status de tempo limite também
+          // é recalculado a partir do último snapshot guardado abaixo.
+          datasPresenceRenderizar(datasPresenceUltimosDados);
+        }
+      }, 15000);
+    }, erro => {
+      const status = document.getElementById('adm-presenca-status');
+      if (status) status.textContent = 'Não foi possível ler as sessões. Verifique as regras do Firebase.';
+      console.error('[Presença DATAS] Erro ao monitorar:', erro);
+    });
+  }
+  let datasPresenceUltimosDados = {};
+  document.getElementById('adm-presenca-recarregar')?.addEventListener('click', () => {
+    datasPresenceRenderizar(datasPresenceUltimosDados);
+  });
+  function datasPresenceSelecionarTodos(marcar) {
+    document.querySelectorAll('#adm-presenca-tbody .adm-presenca-selecao').forEach(cb => { cb.checked = !!marcar; });
+    const todos = document.getElementById('adm-presenca-check-todos');
+    if (todos) todos.checked = !!marcar;
+  }
+  document.getElementById('adm-presenca-selecionar-todos')?.addEventListener('click', () => {
+    const caixas = Array.from(document.querySelectorAll('#adm-presenca-tbody .adm-presenca-selecao'));
+    const marcar = caixas.some(cb => !cb.checked);
+    datasPresenceSelecionarTodos(marcar);
+  });
+  document.getElementById('adm-presenca-check-todos')?.addEventListener('change', e => datasPresenceSelecionarTodos(e.target.checked));
+  document.getElementById('adm-presenca-enviar-refresh')?.addEventListener('click', async () => {
+    
+    const selecionados = Array.from(document.querySelectorAll('#adm-presenca-tbody .adm-presenca-selecao:checked'))
+      .map(cb => cb.dataset.presenceId).filter(Boolean);
+    if (!selecionados.length) { alert('Selecione pelo menos um dispositivo online.'); return; }
+    if (!confirm(`Confirma enviar o comando de atualizar a página (F5) para ${selecionados.length} dispositivo(s)? Operações não salvas podem ser perdidas.`)) return;
+    const botao = document.getElementById('adm-presenca-enviar-refresh');
+    if (botao) { botao.disabled = true; botao.textContent = 'Enviando…'; }
+    const resultados = await Promise.allSettled(selecionados.map(id =>
+      set(ref(db, 'comandosAtualizacaoDatas/' + id), { token: Date.now() + Math.floor(Math.random() * 100000), enviadoEm: Date.now(), tipo: 'reload', origem: 'painel-administrativo' })
+    ));
+    const sucesso = resultados.filter(r => r.status === 'fulfilled').length;
+    const falhas = resultados.length - sucesso;
+    if (botao) { botao.disabled = false; botao.textContent = '⟳ Atualizar selecionados'; }
+    alert(`Comando enviado para ${sucesso} dispositivo(s).${falhas ? ` ${falhas} envio(s) falharam; confira as regras do Firebase.` : ''}`);
+  });
+
+// ===== Alvo, abas e carregamento =====
+function carregarAlvo() {
+  unsubs.forEach(u => u()); unsubs = [];
+  Object.assign(estado, { perm:{}, vis:{}, divs:[] }); window.__dicasOrientacao = {};
+  document.querySelectorAll('.adm-alvo').forEach(b => b.classList.toggle('ativa', b.dataset.alvo === alvo));
+  document.querySelector('[data-aba="monitor"]').style.display = alvo === 'datas' ? '' : 'none';
+  if (alvo !== 'datas' && $('adm-pane-monitor').classList.contains('ativa')) mostrarAba('funcoes');
+  $('adm-dica-form').classList.remove('aberto');
+  montarPerm(); montarVis(); admRenderizarDicas();
+  unsubs.push(onValue(cfgRef('perm'), s => { estado.perm = s.val() || {}; montarPerm(); }));
+  unsubs.push(onValue(cfgRef('vis'),  s => { estado.vis = s.val() || {}; montarVis(); }));
+  if (T[alvo].divs) unsubs.push(onValue(cfgRef('divs'), s => { const v = s.val(); estado.divs = Array.isArray(v) ? v : Object.values(v || {}); montarDivs(); }));
+  unsubs.push(onValue(cfgRef('dicas'), s => { window.__dicasOrientacao = s.val() || {}; admRenderizarDicas(); }));
+}
+function mostrarAba(nome) {
+  document.querySelectorAll('.adm-tab').forEach(b => { const on = b.dataset.aba === nome; b.classList.toggle('ativa', on); b.setAttribute('aria-selected', on); });
+  document.querySelectorAll('.adm-pane').forEach(p => p.classList.toggle('ativa', p.id === 'adm-pane-' + nome));
+  $('adm-actions').classList.toggle('aba-outra', nome !== 'funcoes');
+  if (nome === 'monitor') datasPresenceIniciarMonitoramento();
+}
+document.querySelectorAll('.adm-tab').forEach(b => b.onclick = () => mostrarAba(b.dataset.aba));
+document.querySelectorAll('.adm-alvo').forEach(b => b.onclick = () => { alvo = b.dataset.alvo; sessionStorage.setItem('admAlvo', alvo); carregarAlvo(); });
+
+function entrar() { $('adm-login').style.display = 'none'; $('adm-app').style.display = 'block'; carregarAlvo(); }
+$('adm-login-ok').onclick = () => {
+  if ($('adm-login-pin').value !== ADM_PIN) { $('adm-login-erro').textContent = 'PIN incorreto.'; return; }
+  sessionStorage.setItem('admPainelOk', '1'); entrar();
+};
+$('adm-login-pin').addEventListener('keydown', e => { if (e.key === 'Enter') $('adm-login-ok').click(); });
+$('adm-sair').onclick = () => { sessionStorage.removeItem('admPainelOk'); location.reload(); };
+if (sessionStorage.getItem('admPainelOk') === '1') entrar();
+
+</script>
+</body>
+</html>
