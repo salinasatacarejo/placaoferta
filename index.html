@@ -6,7 +6,7 @@
   <title>Criar Cartaz</title>
   <link rel="icon" href="https://miramarsupermercado.com.br/wp-content/uploads/2024/10/cropped-icone.png" type="image/png">
 
-<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Cal+Sans&family=Carter+One&family=Protest+Riot&family=Roboto:ital,wght@0,100..900;1,100..900&family=Secular+One&family=Yatra+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Cal+Sans&family=Gidole&family=Carter+One&family=Protest+Riot&family=Roboto:ital,wght@0,100..900;1,100..900&family=Secular+One&family=Yatra+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -28,6 +28,24 @@
       background-color: #8a222220;
     }
     @media(max-width:900px){ .wrap{flex-direction:column;} .editor-area{width:100%} }
+
+    /* Cada cartaz fica na mesma linha do seu editor */
+    .grade{
+      display:grid;
+      grid-template-columns:420px 360px;
+      column-gap:20px;
+      align-items:start;
+    }
+    .grade > div{ display:contents; }
+    .grade .preview{ grid-column:1; grid-row:var(--n); }
+    .grade .editor-par{ grid-column:2; grid-row:var(--n); }
+    .grade .small{ grid-column:2; }
+    @media(max-width:900px){
+      .grade{ grid-template-columns:1fr; width:100%; }
+      .grade .preview{ grid-column:1; grid-row:calc(var(--n) * 2 - 1); }
+      .grade .editor-par{ grid-column:1; grid-row:calc(var(--n) * 2); }
+      .grade .barcode-search-area, .grade .editor-area{ width:100%; }
+    }
 
     .preview{
       width:420px;
@@ -77,11 +95,11 @@ transform: scaleY(1.15);
       font-weight: 900;
       text-align:center;
       text-transform:uppercase;
-      letter-spacing:1px;
-      line-height: 0.8;
+      letter-spacing:-1px;
+      line-height: 0.85;
       color:#1a1a1a;
       margin:20px 0 6px 0;
-      max-width:92%;
+      max-width:93%;
       white-space: normal;
       word-wrap: break-word;
       overflow-wrap: break-word;
@@ -199,13 +217,25 @@ letter-spacing: 1px;
 
     .editor-area h3 {
       margin: 0 0 8px 0;
-      font-size: 16px;
-      color: var(--blue); /* Garante a mesma cor do título da busca */
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex; /* Permite alinhar o label da campanha lado a lado */
-      align-items: center;
+    font-size: 16px;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    -webkit-text-stroke: 0.4px;
+    -webkit-text-stroke-color: #ffffff;
+    text-shadow: -0.13px 1.5px 2px rgb(122 122 122);
+
+    background-color: #f0f0f0; /* Cor de fundo do retângulo */
+  padding: 6px 12px;         /* Espaçamento interno (distância do texto para as bordas) */
+  border-radius: 4px;        /* Arredondamento das bordas (opcional) */
+  width: fit-content;        /* Faz o retângulo acompanhar apenas o tamanho do texto */
+
     }
+
+    
+
     .field{margin-bottom:10px}
     label{display:block;font-weight:700;margin-bottom:6px}
     input[type=text], input[type=date], textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;box-sizing:border-box;font-size:14px}
@@ -232,7 +262,7 @@ letter-spacing: 1px;
       margin-top: 0;
       margin-bottom: 10px;
       font-weight: 700;
-      color: var(--blue);
+      color: #f00100;
     }
     #saved-list ul {
       list-style: none;
@@ -298,7 +328,7 @@ letter-spacing: 1px;
       pointer-events: none;
     }
     #loading-card {
-      background: white;
+      background: #ffb26a;
       width: 300px;
       height: 190px;
       border-radius: 12px;
@@ -320,8 +350,8 @@ letter-spacing: 1px;
 
     /* Spinner circle */
     .spinner {
-      width: 50px;
-      height: 50px;
+      width: 100px;
+      height: 100px;
       border: 6px solid #ccc;
       border-top-color: var(--blue);
       border-radius: 50%;
@@ -429,7 +459,7 @@ letter-spacing: 1px;
     .barcode-search-area h3 {
       margin: 0 0 8px 0;
       font-size: 12px;
-      color: var(--blue);
+      color: #f00100;
       text-transform: uppercase; /* Opcional: padroniza a leitura */
       letter-spacing: 0.5px;
     }
@@ -440,7 +470,7 @@ letter-spacing: 1px;
       right: 0;
       top: 5%;
       transform: translateY(-50%);
-      background: var(--blue);
+      background: var(--orange);
       color: white;
       border: none;
       padding: 15px 10px;
@@ -485,7 +515,7 @@ letter-spacing: 1px;
       display: block;
       width: 100%;
       padding: 12px;
-      background: var(--blue);
+      background: var(--orange);
       color: white;
       text-align: center;
       text-decoration: none;
@@ -495,7 +525,9 @@ letter-spacing: 1px;
       transition: background 0.2s;
     }
     .btn-menu-lateral:hover {
-      background: var(--orange);
+      background: #f8bf87;
+      text-shadow: 2px 1px 2px black; 
+      color: #ffffff;
     }
     #menu-lateral-overlay {
       position: fixed;
@@ -607,6 +639,61 @@ letter-spacing: 1px;
       animation: anim-down 0.25s ease-out;
     }
 
+
+    /* Pop-up: modo de salvar todos os cartazes */
+    #popup-modo-salvar-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 10002;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(4px);
+    }
+    #popup-modo-salvar-container {
+      background: white;
+      width: 420px;
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+      padding: 25px;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: 'Oswald', sans-serif;
+    }
+    #popup-modo-salvar-container h2 {
+      margin-top: 0;
+      color: var(--blue);
+      font-size: 22px;
+      border-bottom: 2px solid var(--blue);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .modo-salvar-opcoes { display: flex; flex-direction: column; gap: 12px; }
+    .popup-btn-modo {
+      padding: 14px;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      font-size: 17px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s, filter 0.2s;
+    }
+    .popup-btn-modo:hover { transform: scale(1.03); filter: brightness(1.08); }
+    .popup-btn-modo-cancelar {
+      margin-top: 14px;
+      background: none;
+      border: none;
+      color: #666;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     /* Estilos do Pop-up de Seleção de Loja */
     #popup-loja-overlay {
       position: fixed;
@@ -681,14 +768,33 @@ letter-spacing: 1px;
     color: #101010;
 }
 
-  </style>
+      /* Orientações exibidas aos usuários */
+    .orientacao-destaque-contorno { outline:4px solid var(--orientacao-cor,#ff8a1c) !important; outline-offset:4px !important; }
+    @keyframes orientacaoPiscar { 0%,100%{box-shadow:0 0 0 0 rgba(var(--orientacao-rgb,255,138,28),0)} 50%{box-shadow:0 0 0 7px rgba(var(--orientacao-rgb,255,138,28),.55)} }
+    @keyframes orientacaoPulsar { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    .orientacao-destaque-piscar { animation:orientacaoPiscar .8s ease-in-out infinite !important; }
+    .orientacao-destaque-pulsar { animation:orientacaoPulsar .85s ease-in-out infinite !important; position:relative; z-index:14001 !important; }
+    .orientacao-balao { position:fixed; z-index:14002; width:min(310px,calc(100vw - 28px)); background:var(--orientacao-bg,#213966); color:var(--orientacao-fg,#fff); border-radius:9px; padding:13px 14px; box-sizing:border-box; box-shadow:0 8px 25px rgba(0,0,0,.3); font-family:Arial,sans-serif; }
+    .orientacao-balao h5, .orientacao-popup h5 { margin:0 28px 7px 0; font-size:16px; }
+    .orientacao-balao p, .orientacao-popup p { margin:0; font-size:13px; line-height:1.45; white-space:pre-wrap; }
+    .orientacao-fechar { position:absolute; right:8px; top:7px; border:0; background:transparent; color:inherit; font-size:20px; cursor:pointer; }
+    .orientacao-nav { display:flex; justify-content:flex-end; align-items:center; gap:7px; margin-top:11px; }
+    .orientacao-nav span { margin-right:auto; font-size:11px; opacity:.8; }
+    .orientacao-nav button { border:0; border-radius:6px; padding:7px 10px; font-weight:700; cursor:pointer; }
+    .orientacao-overlay { position:fixed; inset:0; z-index:14000; background:rgba(0,0,0,.52); display:flex; align-items:center; justify-content:center; padding:18px; box-sizing:border-box; }
+    .orientacao-popup { position:relative; width:min(520px,92vw); background:#fff; color:#222; border-top:7px solid var(--orientacao-bg,#213966); border-radius:13px; padding:23px; box-sizing:border-box; box-shadow:0 15px 45px rgba(0,0,0,.35); font-family:Arial,sans-serif; }
+    .orientacao-faixa { position:fixed; left:0; right:0; top:0; z-index:14002; background:var(--orientacao-bg,#213966); color:var(--orientacao-fg,#fff); padding:13px 52px 13px 18px; box-shadow:0 4px 18px rgba(0,0,0,.28); font-family:Arial,sans-serif; }
+    .orientacao-faixa strong { display:block; margin-bottom:3px; }
+    .orientacao-faixa .orientacao-fechar { right:16px; top:8px; }
+    .orientacao-popup h5 { color:var(--orientacao-bg,#213966); }
+</style>
 </head>
 <body>
 
   <button type="button" id="btn-add-cartaz" onclick="iniciarAdicaoCartaz()">
     <span>+</span><span class="texto"> ADICIONAR PLACA</span>
   </button>
-  <button type="button" id="btn-salvar-todos-congelado" onclick="salvarTodosCartazesPreenchidos()">💾 Salvar Todos os Cartazes</button>
+  <button type="button" id="btn-salvar-todos-congelado" onclick="perguntarModoSalvarTodos()">💾 Salvar Todos os Cartazes</button>
 
   <button type="button" id="menu-lateral-toggle" onclick="toggleMenuLateral()" title="Menu">
     <span class="tracinho"></span>
@@ -734,8 +840,9 @@ letter-spacing: 1px;
 
 
   <div class="wrap">
+    <div class="grade">
     <div>
-      <div class="preview" aria-hidden="false">
+      <div class="preview" style="--n:1" aria-hidden="false">
         <div class="cartaz" id="cartaz1">
           <div class="card" id="card1">
             <div class="descricao" id="descricao-output1"></div>
@@ -753,7 +860,7 @@ letter-spacing: 1px;
         </div>
       </div>
 
-      <div class="preview" aria-hidden="false">
+      <div class="preview" style="--n:2" aria-hidden="false">
         <div class="cartaz" id="cartaz2">
           <div class="card" id="card2">
             <div class="descricao" id="descricao-output2"></div>
@@ -773,6 +880,7 @@ letter-spacing: 1px;
     </div>
 
     <div>
+      <div class="editor-par" style="--n:1">
       <div class="barcode-search-area">
         <h3>🔍 Consultar Código de Barras (Cartaz 1)</h3>
         <div class="field">
@@ -782,7 +890,7 @@ letter-spacing: 1px;
       </div>
 
       <div class="editor-area" role="region" aria-label="Editor Cartaz 1">
-        <h3>Editor do Cartaz 1 <span id="label-campanha-1" style="color:var(--orange); font-size:12px; margin-left:5px;"></span></h3>
+        <h3>Editor do Cartaz 1 <span id="label-campanha-1" style="color:var(--orange); font-size:12px; margin-left:5px; -webkit-text-stroke-color: #000000cc;"></span></h3>
         <div class="field">
           <label>Descrição</label>
           <input id="descricao1" type="text" placeholder="Ex: LEITE UHT BETÂNIA INTEGRAL OU DESNATADO 1L" maxlength="60" />
@@ -803,16 +911,16 @@ letter-spacing: 1px;
             <input id="preco-oferta1" type="text" placeholder="" />
           </div>
         </div>
-        <div class="row">
-          <div class="field half">
-            <label>Data Inicial</label>
-            <input id="data-inicial1" type="date" />
-          </div>
-          <div class="field half">
-            <label>Data Final</label>
-            <input id="data-final1" type="date" />
-          </div>
-        </div>
+<div class="row">
+  <div class="field half">
+    <label id="label-data-inicial1">Data Inicial</label>
+    <input id="data-inicial1" type="date" />
+  </div>
+  <div class="field half" id="campo-data-final1">
+    <label>Data Final</label>
+    <input id="data-final1" type="date" />
+  </div>
+</div>
         <div class="row">
           <div class="field half">
             <label>UND / KG</label>
@@ -828,7 +936,9 @@ letter-spacing: 1px;
 <button id="save-image-cartaz1" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 1</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
+      </div>
 
+      <div class="editor-par" style="--n:2">
       <div class="barcode-search-area">
         <h3>🔍 Consultar Código de Barras (Cartaz 2)</h3>
         <div class="field">
@@ -838,7 +948,7 @@ letter-spacing: 1px;
       </div>
 
       <div class="editor-area" role="region" aria-label="Editor Cartaz 2">
-        <h3>Editor do Cartaz 2 <span id="label-campanha-2" style="color:var(--orange); font-size:12px; margin-left:5px;"></span></h3>
+        <h3>Editor do Cartaz 2 <span id="label-campanha-2" style="color:var(--orange); font-size:12px; margin-left:5px; -webkit-text-stroke-color: #000000cc;"></span></h3>
         <div class="field">
           <label>Descrição</label>
           <input id="descricao2" type="text" placeholder="Ex: LEITE UHT BETÂNIA INTEGRAL OU DESNATADO 1L" maxlength="60" />
@@ -884,9 +994,11 @@ letter-spacing: 1px;
 <button id="save-image-cartaz2" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz 2</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
+      </div>
 
       <div style="margin-top:20px" class="small">
       </div>
+    </div>
     </div>
 
     <div id="saved-list" aria-live="polite">
@@ -895,10 +1007,21 @@ letter-spacing: 1px;
     </div>
   </div>
 
+  <div id="popup-modo-salvar-overlay">
+    <div id="popup-modo-salvar-container" role="dialog" aria-modal="true" aria-label="Como deseja salvar os cartazes?">
+      <h2>Como deseja salvar os cartazes?</h2>
+      <div class="modo-salvar-opcoes">
+        <button type="button" class="popup-btn-modo" style="background:#858181;" onclick="escolherModoSalvarTodos(false)">Somente texto</button>
+        <button type="button" class="popup-btn-modo" style="background:#5f9ea9;" onclick="escolherModoSalvarTodos(true)">Texto e imagem de fundo</button>
+      </div>
+      <button type="button" class="popup-btn-modo-cancelar" onclick="fecharPopupModoSalvar()">Cancelar</button>
+    </div>
+  </div>
+
   <div id="loading-overlay" aria-live="assertive" aria-label="Carregando">
     <div id="loading-card" role="alert" aria-busy="true" aria-live="assertive" aria-atomic="true">
-      <div>Gerando o PDF, por favor aguarde...</div>
-      <img src="spinner.gif" alt="Carregando..." style="width:95px; height:50px; margin: 0 auto; display: block;" />
+      <div><span style="font-size: 12px;">Gerando o PDF, por favor aguarde...</span></div>
+      <img src="spinner.gif" alt="Carregando..." style="width:150px; height:auto; margin: 0 auto; display: block;" />
     </div>
   </div>
 
@@ -1020,6 +1143,22 @@ letter-spacing: 1px;
       document.getElementById('popup-overlay').style.display = 'flex';
     }
   }
+  
+  function ajustarCamposDataEditor(idSuffix, encarte) {
+    const isDia = (encarte === 'OFERTA DO DIA');
+    const label = document.getElementById('label-data-inicial' + idSuffix);
+    const campoFinal = document.getElementById('campo-data-final' + idSuffix);
+    const inputFinal = document.getElementById('data-final' + idSuffix);
+
+    if (label) label.textContent = isDia ? 'Data da oferta' : 'Data Inicial';
+    if (campoFinal) campoFinal.style.display = isDia ? 'none' : '';
+
+    // Zera a data final escondida para não ficar valor "fantasma" sendo salvo
+    if (isDia && inputFinal && inputFinal.value) {
+      inputFinal.value = '';
+      inputFinal.dispatchEvent(new Event('input')); // reabilita Observação e atualiza o preview
+    }
+  }
 
   function selecionarOpcaoCartaz(opcao) {
     if (addingNewPoster) {
@@ -1036,13 +1175,13 @@ letter-spacing: 1px;
     // [OCULTO TEMPORARIAMENTE] Para reativar o pop-up de loja, descomente a linha abaixo.
     // document.getElementById('popup-loja-overlay').style.display = 'flex';
 
-    // Update labels de todos os cartazes gerados até o momento
+    // Update labels e campos de data de todos os cartazes gerados até o momento
     for (let i = 1; i <= window.contadorCartazes; i++) {
         const labelEl = document.getElementById('label-campanha-' + i);
         if (labelEl) labelEl.textContent = `(${opcao})`;
+        ajustarCamposDataEditor(i, opcao);
     }
-    
-    
+
     // Altera a imagem de fundo caso seja PREÇO NORMAL
     const cartazes = document.querySelectorAll('.cartaz');
 
@@ -1051,8 +1190,7 @@ letter-spacing: 1px;
         cartazes.forEach(c => { c.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')"; c.setAttribute('data-encarte', opcao); });
     } else if (opcao === 'OFERTA DO DIA') {
         cartazes.forEach(c => { c.style.backgroundImage = "url('fundo-ofertadia.png')"; c.setAttribute('data-encarte', opcao); });
-    
-      } else {
+    } else {
         // Caso contrário, aplica o fundo padrão
         cartazes.forEach(c => { c.style.backgroundImage = "url('fundo-cartaz.png')"; c.setAttribute('data-encarte', opcao); });
     }
@@ -1081,7 +1219,7 @@ letter-spacing: 1px;
     if (window.initFirebaseWithCategory) {
         window.initFirebaseWithCategory(opcao);
     }
-    
+
     if (addingNewPoster) {
       gerarNovoCartaz();
       addingNewPoster = false;
@@ -1102,11 +1240,11 @@ letter-spacing: 1px;
     window.contadorCartazes++;
     const id = window.contadorCartazes;
 
-    const previewsContainer = document.querySelector('.wrap > div:nth-child(1)');
-    const editorsContainer = document.querySelector('.wrap > div:nth-child(2)');
+    const previewsContainer = document.querySelector('.grade > div:nth-child(1)');
+    const editorsContainer = document.querySelector('.grade > div:nth-child(2)');
 
     const previewHTML = `
-      <div class="preview" aria-hidden="false">
+      <div class="preview" style="--n:${id}" aria-hidden="false">
         <div class="cartaz" id="cartaz${id}">
           <div class="card" id="card${id}">
             <div class="descricao" id="descricao-output${id}"></div>
@@ -1127,6 +1265,7 @@ letter-spacing: 1px;
     previewsContainer.insertAdjacentHTML('beforeend', previewHTML);
 
     const editorHTML = `
+      <div class="editor-par" style="--n:${id}">
       <div class="barcode-search-area">
         <h3>🔍 Consultar Código de Barras (Cartaz ${id})</h3>
         <div class="field">
@@ -1136,7 +1275,7 @@ letter-spacing: 1px;
       </div>
 
       <div class="editor-area" role="region" aria-label="Editor Cartaz ${id}">
-        <h3>Editor do Cartaz ${id} <span id="label-campanha-${id}" style="color:var(--orange); font-size:12px; margin-left:5px;">(${encarteDoCartaz})</span></h3>
+        <h3>Editor do Cartaz ${id} <span id="label-campanha-${id}" style="color:var(--orange); font-size:12px; margin-left:5px; -webkit-text-stroke-color: #000000cc; ">(${encarteDoCartaz})</span></h3>
         <div class="field">
           <label>Descrição</label>
           <input id="descricao${id}" type="text" placeholder="Ex: LEITE UHT BETÂNIA INTEGRAL OU DESNATADO 1L" maxlength="60" />
@@ -1159,10 +1298,10 @@ letter-spacing: 1px;
         </div>
         <div class="row">
           <div class="field half">
-            <label>Data Inicial</label>
+            <label id="label-data-inicial${id}">Data Inicial</label>
             <input id="data-inicial${id}" type="date" />
           </div>
-          <div class="field half">
+          <div class="field half" id="campo-data-final${id}">
             <label>Data Final</label>
             <input id="data-final${id}" type="date" />
           </div>
@@ -1182,6 +1321,7 @@ letter-spacing: 1px;
 <button id="save-image-cartaz${id}" style="flex: 1; background:#5f9ea9;"><span style="color:#fff; -webkit-text-stroke:1px #000; paint-order:stroke fill;">💾 Salvar Cartaz ${id}</span><br><span style="font-size:12px; font-weight:400; color:#ffffff;">(texto e imagem)</span></button>
         </div>
       </div>
+      </div>
     `;
 
     const divSmallEnd = editorsContainer.querySelector('div.small[style="margin-top:20px"]');
@@ -1193,7 +1333,7 @@ letter-spacing: 1px;
 
     const novoElementoCartaz = document.getElementById('cartaz' + id);
     novoElementoCartaz.setAttribute('data-encarte', encarteDoCartaz);
-    
+
     if (encarteDoCartaz === 'PREÇO NORMAL') {
         novoElementoCartaz.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')";
     } else if (encarteDoCartaz === 'OFERTA DO DIA') {
@@ -1204,6 +1344,7 @@ letter-spacing: 1px;
 
     const novoCartaz = setupCartaz(id.toString());
     novoCartaz.encarteExclusivo = encarteDoCartaz;
+    ajustarCamposDataEditor(id, encarteDoCartaz);
     window.cartazesAtivos.push(novoCartaz);
 
     document.getElementById('save-cartaz' + id).addEventListener('click', async () => {
@@ -1363,7 +1504,7 @@ function adjustDescricaoFontSize() {
 
   // [limite de caracteres, tamanho da fonte]; o último valor é o tamanho finalRE
   const tabela = checkOfertaDoDia
-    ? [[10, 55], [15, 45], [25, 35], [Infinity, 30]]
+    ? [[10, 55], [15, 50], [25, 45], [30, 43], [35, 40], [Infinity, 35]]
     : [[10, 70], [15, 65], [25, 55], [35, 45], [Infinity, 30]];
 
   const fontSize = tabela.find(([limite]) => textLength <= limite)[1];
@@ -1752,8 +1893,21 @@ cadaOutput.style.marginBottom = '50px';
     }
   }
 
-  // Função para salvar todos os cartazes preenchidos de uma só vez (Sem Imagem)
-  async function salvarTodosCartazesPreenchidos() {
+  // Pergunta ao usuário como salvar todos os cartazes
+  function perguntarModoSalvarTodos() {
+    document.getElementById('popup-modo-salvar-overlay').style.display = 'flex';
+  }
+  function fecharPopupModoSalvar() {
+    document.getElementById('popup-modo-salvar-overlay').style.display = 'none';
+  }
+  async function escolherModoSalvarTodos(comImagem) {
+    fecharPopupModoSalvar();
+    await salvarTodosCartazesPreenchidos(comImagem);
+  }
+
+  // Função para salvar todos os cartazes preenchidos de uma só vez
+  // comImagem = false → somente texto | comImagem = true → texto e imagem de fundo
+  async function salvarTodosCartazesPreenchidos(comImagem = false) {
     const cartazesParaSalvar = [];
     
     window.cartazesAtivos.forEach((cartazObj, idx) => {
@@ -1773,7 +1927,9 @@ cadaOutput.style.marginBottom = '50px';
 
       for (const item of cartazesParaSalvar) {
         const cartazObj = item.obj;
-        const canvas = await html2canvas(cartazObj.container, { scale: 3, useCORS: true, backgroundColor: null });
+        const canvas = comImagem
+          ? await html2canvas(cartazObj.cartazCompleto, { scale: 3, useCORS: true })
+          : await html2canvas(cartazObj.container, { scale: 3, useCORS: true, backgroundColor: null });
 
         const pdf = new jsPDF({
           unit: 'mm',
@@ -1785,14 +1941,19 @@ cadaOutput.style.marginBottom = '50px';
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
-        const imgWidth = canvas.width * ratio;
-        const imgHeight = canvas.height * ratio;
-        
-        const marginX = ((pdfWidth - imgWidth) / 2) + 3
-        const marginY = (pdfHeight - imgHeight) / 2 - 5;
+        if (comImagem) {
+          // Preenchimento total da folha A4
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        } else {
+          const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
+          const imgWidth = canvas.width * ratio;
+          const imgHeight = canvas.height * ratio;
 
-        pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
+          const marginX = ((pdfWidth - imgWidth) / 2) + 3
+          const marginY = (pdfHeight - imgHeight) / 2 - 5;
+
+          pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
+        }
 
         const currentFontSize = window.getComputedStyle(cartazObj.descricaoOutput).fontSize;
         const currentTop = window.getComputedStyle(cartazObj.descricaoOutput).top;
@@ -1800,7 +1961,7 @@ cadaOutput.style.marginBottom = '50px';
         const encarteAtual = cartazObj.encarteExclusivo || window.opcaoCartazSelecionada || 'GERAL';
 
         if (window.firebaseSaveHandlerCustom) {
-          await window.firebaseSaveHandlerCustom(pdf, cartazObj.descricaoInput.value || '', cartazObj.precoOfertaInput.value || '', cartazObj.dataInicialInput.value || '', cartazObj.dataFinalInput.value || '', currentFontSize, currentTop, cartazObj.precoAntesInput.value || '', cartazObj.cadaInput.value || '', cartazObj.rodapeInput.value || '', false, encarteAtual);
+          await window.firebaseSaveHandlerCustom(pdf, cartazObj.descricaoInput.value || '', cartazObj.precoOfertaInput.value || '', cartazObj.dataInicialInput.value || '', cartazObj.dataFinalInput.value || '', currentFontSize, currentTop, cartazObj.precoAntesInput.value || '', cartazObj.cadaInput.value || '', cartazObj.rodapeInput.value || '', comImagem, encarteAtual);
         } else {
           await savePdfToLocalStorage(
             pdf, 
@@ -1813,7 +1974,7 @@ cadaOutput.style.marginBottom = '50px';
             cartazObj.precoAntesInput.value || '',
             cartazObj.cadaInput.value || '',
             cartazObj.rodapeInput.value || '',
-            false
+            comImagem
           );
         }
       }
@@ -1994,7 +2155,7 @@ cadaOutput.style.marginBottom = '50px';
       headerLi.style.display = 'block';
       headerLi.style.justifyContent = 'space-between';
       headerLi.style.alignItems = 'center';
-      headerLi.style.color = 'var(--blue)';
+      headerLi.style.color = '#000000';
       headerLi.style.marginBottom = '5px';
       headerLi.style.border = '1px solid #ddd';
 
@@ -2226,6 +2387,205 @@ cadaOutput.style.marginBottom = '50px';
     }
   }
   registrarAcesso();
+
+  // ============================================================
+  // PAINEL ADMIN (admin.html): funções, visibilidade, div's ocultas e dicas
+  // Lê as configurações em tempo real do mesmo banco usado pelo datas.html.
+  // ============================================================
+  (function () {
+    const INICIO = new Date("2026-09-22T00:00:00-03:00").getTime(), DUR = 168 * 60 * 60 * 1000;
+    const idx = Math.floor(Math.max(0, Date.now() - INICIO) / DUR) % databasesFirebase.length;
+    const dbAdm = databasesFirebase[idx] || databasesFirebase[0];
+    const cfg = n => ref(dbAdm, 'configuracoes/' + n);
+    const estado = { perm: {} };
+    const TIPO = { 'PREÇO OFERTA': 'ENCARTE SEMANAL', 'PREÇO NORMAL': 'PREÇO AVULSO', 'OFERTA DO DIA': 'OFERTA DO DIA' };
+    const estilo = (id, css) => {
+      let st = document.getElementById(id);
+      if (!st) { st = document.createElement('style'); st.id = id; document.head.appendChild(st); }
+      st.textContent = css;
+    };
+    window.__dicasOrientacao = {};
+    let orientacaoAtualCleanup = null, orientacaoTimer = null, primeiraCarga = true;
+    const escHtml = (v = '') => String(v).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+    const admNormalizarElementoSelecionado = el => el ? (el.closest('button,a,input,select,textarea,label,th,td,[role="button"]') || el) : null;
+
+    // Funções ativadas/desativadas por tipo de placa
+    onValue(cfg('permissoesIndex'), s => { estado.perm = s.val() || {}; });
+    document.addEventListener('click', e => {
+      const mapa = estado.perm.__map || {};
+      for (const f in mapa) {
+        const acerta = (mapa[f] || []).some(sel => { try { return !!e.target.closest(sel); } catch (_e) { return false; } });
+        if (!acerta) continue;
+        const tipo = TIPO[window.opcaoCartazSelecionada] || 'PREÇO AVULSO';
+        if (estado.perm[f] && estado.perm[f][tipo] === false) {
+          e.preventDefault(); e.stopImmediatePropagation();
+          alert('Função desativada pelo administrador para este tipo de placa.');
+        }
+        return;
+      }
+    }, true);
+
+    // Botões, inputs e cabeçalhos ocultos
+    onValue(cfg('visibilidadeIndex'), s => {
+      const v = s.val() || {};
+      estilo('adm-vis-index', (v.__css || []).map(sel => `${sel} { display:none !important; }`).join('\n'));
+    });
+    // Div's ocultas pela classe digitada no painel
+    onValue(cfg('divsOcultasIndex'), s => {
+      const v = s.val(), lista = Array.isArray(v) ? v : Object.values(v || {});
+      estilo('adm-divs-index', lista.filter(c => /^[A-Za-z_][\w-]*$/.test(c)).map(c => `.${c} { display:none !important; }`).join('\n'));
+    });
+
+    // Dicas e orientações
+  function orientacaoChave(d){ return `orientacao_${d.id}_${d.atualizadoEm||0}`; }
+  function orientacaoPodeExibir(d){
+    if(d.ativa===false) return false;
+    const k=orientacaoChave(d);
+    if(d.frequencia==='acesso' && sessionStorage.getItem(k)==='1') return false;
+    if(d.frequencia==='dispositivo' && localStorage.getItem(k)==='1') return false;
+    return true;
+  }
+  function orientacaoMarcarExibida(d){ const k=orientacaoChave(d); if(d.frequencia==='acesso') sessionStorage.setItem(k,'1'); if(d.frequencia==='dispositivo') localStorage.setItem(k,'1'); }
+  function orientacaoLimparAtual(){
+    clearTimeout(orientacaoTimer); orientacaoTimer=null;
+    if(orientacaoAtualCleanup){ orientacaoAtualCleanup(); orientacaoAtualCleanup=null; }
+    document.querySelectorAll('.orientacao-balao,.orientacao-overlay,.orientacao-faixa').forEach(x=>x.remove());
+    document.querySelectorAll('.orientacao-destaque-contorno,.orientacao-destaque-piscar,.orientacao-destaque-pulsar').forEach(x=>{ x.classList.remove('orientacao-destaque-contorno','orientacao-destaque-piscar','orientacao-destaque-pulsar'); x.style.removeProperty('--orientacao-cor'); x.style.removeProperty('--orientacao-rgb'); });
+  }
+  // Cores escolhidas no painel ADM (corTipo / corDestaque)
+  function orientacaoCorValida(c){ return typeof c==='string' && /^#[0-9a-f]{6}$/i.test(c.trim()) ? c.trim() : null; }
+  function orientacaoRgb(hex){ const n=parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+  function orientacaoTextoLegivel(hex){ const [r,g,b]=orientacaoRgb(hex); return (r*299+g*587+b*114)/1000>150 ? '#111' : '#fff'; }
+  function orientacaoAplicarCorTipo(box,cor){
+    const c=orientacaoCorValida(cor); if(!box||!c) return;
+    box.style.setProperty('--orientacao-bg',c);
+    box.style.setProperty('--orientacao-fg',orientacaoTextoLegivel(c));
+  }
+  function orientacaoDestacar(el,tipo,cor){
+    if(!el||tipo==='nenhum')return;
+    const c=orientacaoCorValida(cor);
+    if(c){ el.style.setProperty('--orientacao-cor',c); el.style.setProperty('--orientacao-rgb',orientacaoRgb(c).join(',')); }
+    el.classList.add(`orientacao-destaque-${tipo}`);
+  }
+
+  // Resolve os alvos de forma robusta para IDs, classes, seletores compostos
+  // e elementos que são recriados dinamicamente (como linhas da tabela).
+  function orientacaoResolverAlvos(d){
+    const seletores=[];
+    if(d.aplicacao==='todos') {
+      if(d.alvoTodos) seletores.push(d.alvoTodos);
+      if(d.alvo) seletores.push(d.alvo);
+      if(d.alvoUnico) seletores.push(d.alvoUnico);
+    } else {
+      if(d.alvoUnico) seletores.push(d.alvoUnico);
+      if(d.alvo) seletores.push(d.alvo);
+      if(d.alvoTodos) seletores.push(d.alvoTodos);
+    }
+
+    for(const seletor of [...new Set(seletores.filter(Boolean))]){
+      try{
+        const encontrados=[...document.querySelectorAll(seletor)];
+        if(encontrados.length){
+          return d.aplicacao==='todos' ? encontrados : [encontrados[0]];
+        }
+      }catch(_e){}
+    }
+    return [];
+  }
+  function orientacaoPosicionarBalao(box,el){
+    const r=el.getBoundingClientRect(), m=12, bw=box.offsetWidth, bh=box.offsetHeight;
+    let left=r.right+m, top=r.top+r.height/2-bh/2;
+    if(left+bw>window.innerWidth-m) left=r.left-bw-m;
+    if(left<m) left=m;
+    top=Math.max(m,Math.min(top,window.innerHeight-bh-m));
+    box.style.left=`${left}px`; box.style.top=`${top}px`;
+  }
+
+  function orientacaoGrupoDa(d){
+    if(!d.sequencia) return [d];
+    return Object.entries(window.__dicasOrientacao||{}).map(([id,x])=>({id,...x})).filter(x=>x.ativa!==false && x.sequencia===d.sequencia).sort((a,b)=>Number(a.ordem||1)-Number(b.ordem||1));
+  }
+
+  function orientacaoExibir(d, grupo=null, indice=0){
+    orientacaoLimparAtual();
+    if(!d || !orientacaoPodeExibir(d)) return;
+    grupo=grupo||orientacaoGrupoDa(d);
+    let alvo=null, alvos=orientacaoResolverAlvos(d);
+    alvo = alvos.find(el=>{
+      const r=el.getBoundingClientRect();
+      return r.width>0 && r.height>0 && r.bottom>=0 && r.top<=window.innerHeight && r.right>=0 && r.left<=window.innerWidth;
+    }) || alvos[0] || null;
+
+    // Balão precisa de um alvo. Se o elemento ainda não existe (ex.: tabela ainda
+    // carregando), tenta novamente por alguns segundos em vez de perder a dica.
+    if(d.tipo==='balao' && !alvo){
+      const tentativas=Number(d.__tentativasAlvo||0);
+      if(tentativas<20){
+        setTimeout(()=>orientacaoExibir({...d,__tentativasAlvo:tentativas+1},grupo,indice),250);
+      } else {
+        // Se um alvo da sequência não existir nesta tela, não trava o tutorial:
+        // pula para a próxima orientação do grupo.
+        const prox=grupo[indice+1];
+        if(prox) orientacaoExibirForcado(prox,grupo,indice+1);
+        else orientacaoLimparAtual();
+      }
+      return;
+    }
+    orientacaoMarcarExibida(d);
+    alvos.forEach(el=>orientacaoDestacar(el,d.destaque||'nenhum',d.corDestaque));
+    const temSeq=grupo.length>1;
+    const nav=temSeq?`<div class="orientacao-nav"><span>${indice+1} de ${grupo.length}</span>${indice>0?'<button data-nav="ant">Anterior</button>':''}<button data-nav="prox">${indice===grupo.length-1?'Entendi':'Próxima'}</button></div>`:'';
+    let box;
+    if(d.tipo==='popup'){
+      const ov=document.createElement('div'); ov.className='orientacao-overlay';
+      ov.innerHTML=`<div class="orientacao-popup"><button class="orientacao-fechar" title="Fechar">×</button><h5>${escHtml(d.titulo)}</h5><p>${escHtml(d.texto)}</p>${nav}</div>`;
+      document.body.appendChild(ov); box=ov.querySelector('.orientacao-popup');
+    } else if(d.tipo==='faixa'){
+      box=document.createElement('div'); box.className='orientacao-faixa'; box.innerHTML=`<button class="orientacao-fechar" title="Fechar">×</button><strong>${escHtml(d.titulo)}</strong><div>${escHtml(d.texto).replace(/\n/g,'<br>')}</div>${nav}`; document.body.appendChild(box);
+    } else {
+      box=document.createElement('div'); box.className='orientacao-balao'; box.innerHTML=`<button class="orientacao-fechar" title="Fechar">×</button><h5>${escHtml(d.titulo)}</h5><p>${escHtml(d.texto)}</p>${nav}`; document.body.appendChild(box); orientacaoPosicionarBalao(box,alvo);
+      const repos=()=>orientacaoPosicionarBalao(box,alvo); window.addEventListener('resize',repos); window.addEventListener('scroll',repos,true); orientacaoAtualCleanup=()=>{window.removeEventListener('resize',repos);window.removeEventListener('scroll',repos,true);};
+    }
+    orientacaoAplicarCorTipo(box,d.corTipo);
+    const fechar=()=>orientacaoLimparAtual();
+    const avancar=()=>{
+      const prox=grupo[indice+1];
+      if(prox) orientacaoExibirForcado(prox,grupo,indice+1);
+      else fechar();
+    };
+    // Em uma sequência, fechar a dica atual também continua para a próxima.
+    // Fora de sequência, o X apenas fecha normalmente.
+    box.querySelector('.orientacao-fechar')?.addEventListener('click',()=>{
+      if(grupo.length>1 && indice<grupo.length-1) avancar();
+      else fechar();
+    });
+    box.querySelector('[data-nav="ant"]')?.addEventListener('click',()=>{ const ant=grupo[indice-1]; if(ant) orientacaoExibirForcado(ant,grupo,indice-1); });
+    box.querySelector('[data-nav="prox"]')?.addEventListener('click',avancar);
+    // 5s/10s: avança automaticamente. "Até fechar": avança pelo X ou botão Próxima.
+    if(Number(d.duracao)>0){ orientacaoTimer=setTimeout(avancar,Number(d.duracao)); }
+  }
+
+  function orientacaoExibirForcado(d,grupo,indice){
+    // Dentro de uma sequência, navegação não deve ser bloqueada pela frequência.
+    const freq=d.frequencia; d={...d,frequencia:'sempre'}; orientacaoExibir(d,grupo,indice); d.frequencia=freq;
+  }
+
+  function orientacoesDisparar(quando, gatilhoEl=null){
+    const todas=Object.entries(window.__dicasOrientacao||{}).map(([id,d])=>({id,...d})).filter(d=>d.ativa!==false && d.quando===quando);
+    const candidatas=todas.filter(d=>{ if(quando!=='clique') return true; if(!d.gatilho||!gatilhoEl)return false; try{return !!gatilhoEl.closest(d.gatilho);}catch(_e){return false;} });
+    const inicios=candidatas.filter(d=>!d.sequencia || Number(d.ordem||1)===Math.min(...candidatas.filter(x=>x.sequencia===d.sequencia).map(x=>Number(x.ordem||1))));
+    const primeira=inicios.find(orientacaoPodeExibir); if(primeira) orientacaoExibir(primeira);
+  }
+
+    onValue(cfg('dicasOrientacaoIndex'), s => {
+      window.__dicasOrientacao = s.exists() ? s.val() : {};
+      if (primeiraCarga) { primeiraCarga = false; setTimeout(() => { orientacoesDisparar('abrir'); orientacoesDisparar('cartazes'); }, 300); }
+    });
+    document.addEventListener('click', e => {
+      if (e.target.closest('.orientacao-balao,.orientacao-overlay,.orientacao-faixa')) return;
+      orientacoesDisparar('clique', admNormalizarElementoSelecionado(e.target));
+    }, true);
+  })();
 </script>
 </body>
 </html>
