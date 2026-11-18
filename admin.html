@@ -219,11 +219,12 @@
               <th style="padding:9px;text-align:center;"><input type="checkbox" id="adm-presenca-check-todos" title="Selecionar todos" aria-label="Selecionar todos"></th>
               <th style="padding:9px;text-align:left;">Dispositivo / navegador</th>
               <th style="padding:9px;text-align:left;">Loja identificada</th>
+              <th style="padding:9px;text-align:left;">Localização do acesso</th>
               <th style="padding:9px;text-align:left;">Início da sessão</th>
               <th style="padding:9px;text-align:left;">Último sinal</th>
               <th style="padding:9px;text-align:left;">Estado</th>
             </tr></thead>
-            <tbody id="adm-presenca-tbody"><tr><td colspan="6" style="padding:12px;color:#68727e;">Carregando sessões…</td></tr></tbody>
+            <tbody id="adm-presenca-tbody"><tr><td colspan="7" style="padding:12px;color:#68727e;">Carregando sessões…</td></tr></tbody>
           </table>
         </div>
       </section>
@@ -789,7 +790,7 @@ let datasPresenceUnsubscribe = null, datasPresenceTimerRender = null;
       .sort((a, b) => Number(b.ultimaAtividade || 0) - Number(a.ultimaAtividade || 0));
     status.textContent = `${sessoes.length} sessão(ões) online com esta página aberta.`;
     if (!sessoes.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="padding:12px;color:#68727e;">Nenhuma sessão online identificada neste momento.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:12px;color:#68727e;">Nenhuma sessão online identificada neste momento.</td></tr>';
       const todos = document.getElementById('adm-presenca-check-todos'); if (todos) todos.checked = false;
       return;
     }
@@ -798,10 +799,17 @@ let datasPresenceUnsubscribe = null, datasPresenceTimerRender = null;
       const dispositivo = agente.length > 95 ? agente.slice(0, 92) + '…' : agente;
       const inicio = sessao.inicioEm ? new Date(Number(sessao.inicioEm)).toLocaleString('pt-BR') : 'Indisponível';
       const ultima = new Date(Number(sessao.ultimaAtividade)).toLocaleTimeString('pt-BR');
+      const partesLocal = [sessao.cidadeAcesso, sessao.regiaoAcesso, sessao.paisAcesso].filter(Boolean);
+      const temCoordenadas = typeof sessao.latitude === 'number' && typeof sessao.longitude === 'number';
+      const textoLocal = partesLocal.length ? partesLocal.join(' - ') : (temCoordenadas ? 'Localização aproximada' : 'Não identificada');
+      const localizacaoHtml = temCoordenadas
+        ? `<a href="https://www.google.com/maps?q=${sessao.latitude},${sessao.longitude}" target="_blank" rel="noopener" style="color:#213966;">${datasPresenceEscape(textoLocal)}</a>`
+        : datasPresenceEscape(textoLocal);
       return `<tr style="border-top:1px solid #e8ebef;">
         <td style="padding:9px;text-align:center;"><input type="checkbox" class="adm-presenca-selecao" data-presence-id="${datasPresenceEscape(sessao.id)}" aria-label="Selecionar dispositivo ${datasPresenceEscape(dispositivo)}"></td>
         <td style="padding:9px;max-width:340px;overflow-wrap:anywhere;"><b>${datasPresenceEscape(dispositivo)}</b><br><small style="color:#68727e;">ID: ${datasPresenceEscape(sessao.sessionId || sessao.id)}</small></td>
         <td style="padding:9px;">${datasPresenceEscape(sessao.loja || 'Não identificada')}</td>
+        <td style="padding:9px;white-space:nowrap;">${localizacaoHtml}</td>
         <td style="padding:9px;white-space:nowrap;">${datasPresenceEscape(inicio)}</td>
         <td style="padding:9px;white-space:nowrap;">${datasPresenceEscape(ultima)}</td>
         <td style="padding:9px;color:#1f7a45;font-weight:700;white-space:nowrap;">● ONLINE</td>
