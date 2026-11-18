@@ -2284,7 +2284,8 @@ cadaOutput.style.marginBottom = '50px';
         dateStr,
         timeStr,
         lojaText: window.lojaSelecionadaSessao || 'Não informada',
-        timestamp: now.getTime()
+        timestamp: now.getTime(),
+        comImagem: comImagem === true // true = salvo com texto e imagem de fundo
       };
 
       // push() sem dados gera a chave na hora; a gravação é feita no set() abaixo
