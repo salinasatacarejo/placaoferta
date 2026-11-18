@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Cal+Sans&family=Gidole&family=Carter+One&family=Protest+Riot&family=Roboto:ital,wght@0,100..900;1,100..900&family=Secular+One&family=Yatra+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
 
   <style>
     :root{
@@ -878,6 +879,17 @@
       transform: translateX(0);
       will-change: transform;
     }
+    /* Selo "COM IMAGEM" fixo, abaixo da descrição (cartaz salvo com imagem de fundo) */
+    .badge-com-imagem {
+      display: inline-block;
+      margin-top: 2px;
+      font-size: 6px;
+      line-height: 1.3;
+      padding: 0 2px;
+      color: green;
+      background-color: #a4ffca;
+      font-style: normal;
+    }
     .td-marquee-wrap.tem-overflow:hover .td-marquee-text {
       animation: tdMarquee var(--marquee-duracao, 3s) linear infinite alternate;
     }
@@ -1400,6 +1412,46 @@
     const valor = parseInt(window.quantidadeCopiasCartazes[id], 10);
     return Number.isFinite(valor) && valor >= 1 ? valor : 1;
   }
+
+  // Botão Baixar: lê a quantidade do campo "Cópias" da mesma linha e baixa um único PDF
+  // com o cartaz repetido essa quantidade de vezes (1 = download normal, como antes).
+  // Listener na fase de bubbling: se o Modo ADM bloquear o botão, este código não roda.
+  document.addEventListener('click', async function (e) {
+    const link = e.target.closest('.btn-baixar');
+    if (!link || e.defaultPrevented) return;
+    const tr = link.closest('tr');
+    const inp = tr && tr.querySelector('.input-quantidade-copias');
+    if (!inp) return;
+    const id = inp.getAttribute('data-id');
+    let qtd = parseInt(inp.value, 10);
+    if (!Number.isFinite(qtd) || qtd < 1) qtd = obterQuantidadeCopias(id);
+    if (qtd <= 1) return; // 1 cópia: segue o download normal do link
+    const item = window.listaCartazesMemoria && window.listaCartazesMemoria[id];
+    if (!item || !item.base64 || !window.PDFLib) return; // sem dados/biblioteca: download normal
+    e.preventDefault();
+    try {
+      const bytes = Uint8Array.from(atob(item.base64.split(',')[1]), c => c.charCodeAt(0));
+      const origem = await window.PDFLib.PDFDocument.load(bytes);
+      const destino = await window.PDFLib.PDFDocument.create();
+      const indices = origem.getPageIndices();
+      for (let i = 0; i < qtd; i++) {
+        const paginas = await destino.copyPages(origem, indices);
+        paginas.forEach(p => destino.addPage(p));
+      }
+      const saida = await destino.save();
+      const url = URL.createObjectURL(new Blob([saida], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (link.getAttribute('download') || 'cartaz.pdf').replace(/\.pdf$/i, '') + '-' + qtd + 'x.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err) {
+      console.error('Erro ao gerar PDF com cópias:', err);
+      alert('Não foi possível gerar o PDF com as cópias. Tente novamente.');
+    }
+  });
 
   function expandirSelecionadosPorQuantidade() {
     const expandidos = [];
@@ -2057,8 +2109,55 @@ limparProjetoFirebaseAnterior();
   function datasPresenceEscape(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+  // Localização aproximada do acesso, obtida pelo IP (sem solicitar permissão ao navegador).
+  // Buscada uma única vez por sessão e reaproveitada nos sinais seguintes.
+  // Vários provedores em sequência: o plano gratuito de cada um tem limite de pedidos
+  // (ex.: erro 429), então se o primeiro estiver indisponível no momento, tenta o próximo.
+  const DATAS_PRESENCA_GEO_PROVEDORES = [
+    {
+      url: 'https://ipwho.is/',
+      normalizar: (d) => (d && d.success !== false) ? {
+        lat: typeof d.latitude === 'number' ? d.latitude : null,
+        lng: typeof d.longitude === 'number' ? d.longitude : null,
+        cidade: d.city || '', regiao: d.region || '', pais: d.country || ''
+      } : null
+    },
+    {
+      url: 'https://ipapi.co/json/',
+      normalizar: (d) => (d && !d.error) ? {
+        lat: typeof d.latitude === 'number' ? d.latitude : null,
+        lng: typeof d.longitude === 'number' ? d.longitude : null,
+        cidade: d.city || '', regiao: d.region || '', pais: d.country_name || ''
+      } : null
+    },
+    {
+      url: 'https://geolocation-db.com/json/',
+      normalizar: (d) => (d && typeof d.latitude === 'number') ? {
+        lat: d.latitude, lng: d.longitude,
+        cidade: (d.city && d.city !== 'Not found') ? d.city : '',
+        regiao: d.state || '', pais: d.country_name || ''
+      } : null
+    }
+  ];
+  let datasPresenceLocalizacaoPromise = null;
+  async function datasPresenceLocalizacao() {
+    if (datasPresenceLocalizacaoPromise) return datasPresenceLocalizacaoPromise;
+    datasPresenceLocalizacaoPromise = (async () => {
+      for (const provedor of DATAS_PRESENCA_GEO_PROVEDORES) {
+        try {
+          const resp = await fetch(provedor.url);
+          if (!resp.ok) continue; // ex.: 429 (limite do plano gratuito) — tenta o próximo provedor
+          const geo = provedor.normalizar(await resp.json());
+          if (geo) return geo;
+        } catch (_) { /* provedor fora do ar: tenta o próximo */ }
+      }
+      return null;
+    })();
+    return datasPresenceLocalizacaoPromise;
+  }
   async function datasPresencePublicar() {
     if (/admin-preview/.test(location.search)) return;
+    const geo = await datasPresenceLocalizacao();
     const payload = {
       sessionId: datasPresenceId,
       pagina: 'datas',
@@ -2068,6 +2167,13 @@ limparProjetoFirebaseAnterior();
       inicioEm: datasPresenceStartedAt,
       ultimaAtividade: Date.now()
     };
+    if (geo) {
+      if (typeof geo.lat === 'number') payload.latitude = geo.lat;
+      if (typeof geo.lng === 'number') payload.longitude = geo.lng;
+      if (geo.cidade) payload.cidadeAcesso = geo.cidade;
+      if (geo.regiao) payload.regiaoAcesso = geo.regiao;
+      if (geo.pais) payload.paisAcesso = geo.pais;
+    }
     try {
       await update(datasPresenceRef, payload);
     } catch (erro) {
@@ -2498,7 +2604,8 @@ if (isOfertaDoDiaItem && item.dataInicial) {
         loja: item.lojaText || 'Não informada', // Captura o campo salvo pelo index.html
         salvoTexto: `${item.dateStr} às ${item.timeStr}`,
         timestamp: item.timestamp || 0,
-        base64: item.base64
+        base64: item.base64,
+        comImagem: (item.comImagem === true || item.comImagem === 'true')
       }
         });
 
@@ -2630,7 +2737,7 @@ let corDoTipo = "black";
 
       tr.innerHTML = `
         <td class="col-checkbox"><input type="checkbox" class="cartaz-select-item" data-id="${row.id}" ${window.cartazesSelecionados.has(row.id) ? 'checked' : ''}></td>
-        <td class="col-descricao"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.descricao}</span></span></td>
+        <td class="col-descricao"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.descricao}</span></span>${row.comImagem ? '<span class="badge-com-imagem">COM IMAGEM</span>' : ''}</td>
         <td class="col-tipo" style="color: ${corDoTipo};"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.tipo === "PREÇO NORMAL" ? "PREÇO NORMAL" : row.tipo}</span></span></td>
         <td class="col-vigencia"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.vigencia}</span></span></td>
         <td class="col-preco"><span class="td-marquee-wrap"><span class="td-marquee-text">${row.precoTexto}</span></span></td>
@@ -3064,7 +3171,8 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
     if (encarte === 'PREÇO NORMAL' || encarte === 'PREÇO NORMAL') fundo = 'fundo-cartaz-preço-normal.png';
     else if (isOfertaDoDia) fundo = 'fundo-ofertadia.png';
     else fundo = 'fundo-cartaz.png';
-    cartazRender.style.backgroundImage = `url('${fundo}')`;
+    // Só aplica a imagem de fundo se o cartaz foi salvo originalmente com imagem
+    cartazRender.style.backgroundImage = item.comImagem ? `url('${fundo}')` : 'none';
     cartazRender.classList.toggle('oferta-dia-mode', isOfertaDoDia);
 
     // ----- Descrição -----
@@ -3158,10 +3266,12 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
         }
       }
     }
-    if (!temAntigo) {
-      pAntigoOut.style.display = 'none';
-      areaPreco.style.top = isOfertaDoDia ? '210px' : '290px';
-    }
+if (!temAntigo) {
+  pAntigoOut.style.display = 'none';
+  areaPreco.style.top = (isOfertaDoDia && !temAntigo)
+    ? '305px'
+    : (isOfertaDoDia ? '210px' : '290px');
+}
 
     // ----- "Cada" -----
     const textoCada = item.cadaText || item.cadaOutput || '';
@@ -3195,14 +3305,14 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
     }
 
     // ----- Garante fundo e fontes carregados antes da captura -----
-    await carregarImagem(fundo);
+    if (item.comImagem) await carregarImagem(fundo);
     await document.fonts.ready;
 
     if (emPrevia) {
       // Aplica, só durante a captura, as edições temporárias do editor/comparador
-      return window.__renderPDFCanvas(containerRender, { scale: 3, useCORS: true, backgroundColor: null }, window.__idRenderAtual, 'salvar');
+      return window.__renderPDFCanvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null }, window.__idRenderAtual, 'salvar');
     }
-    return html2canvas(containerRender, { scale: 3, useCORS: true, backgroundColor: null });
+    return html2canvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null });
   };
 
   // ---------- fluxo principal ----------
@@ -3255,12 +3365,12 @@ document.getElementById('btn-salvar-lote').addEventListener('click', async () =>
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
+        const ratio = Math.max(pdfWidth / canvas.width, pdfHeight / canvas.height); // preenche 100% da A4
         const imgWidth = canvas.width * ratio;
         const imgHeight = canvas.height * ratio;
 
-        const marginX = ((pdfWidth - imgWidth) / 2) + 3;
-        const marginY = ((pdfHeight - imgHeight) / 2) - 5;
+        const marginX = (pdfWidth - imgWidth) / 2;
+        const marginY = (pdfHeight - imgHeight) / 2;
 
         pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
 
@@ -3399,7 +3509,8 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
     if (encarte === 'PREÇO NORMAL' || encarte === 'PREÇO NORMAL') fundo = 'fundo-cartaz-preço-normal.png';
     else if (isOfertaDoDia) fundo = 'fundo-ofertadia.png';
     else fundo = 'fundo-cartaz.png';
-    cartazRender.style.backgroundImage = `url('${fundo}')`;
+    // Só aplica a imagem de fundo se o cartaz foi salvo originalmente com imagem
+    cartazRender.style.backgroundImage = item.comImagem ? `url('${fundo}')` : 'none';
     cartazRender.classList.toggle('oferta-dia-mode', isOfertaDoDia);
 
     // ----- Descrição -----
@@ -3493,10 +3604,12 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
         }
       }
     }
-    if (!temAntigo) {
-      pAntigoOut.style.display = 'none';
-      areaPreco.style.top = isOfertaDoDia ? '210px' : '290px';
-    }
+if (!temAntigo) {
+  pAntigoOut.style.display = 'none';
+  areaPreco.style.top = (isOfertaDoDia && !temAntigo)
+    ? '305px'
+    : (isOfertaDoDia ? '210px' : '290px');
+}
 
     // ----- "Cada" -----
     const textoCada = item.cadaText || item.cadaOutput || '';
@@ -3541,12 +3654,12 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
     }
 
     // ----- Garante fundo e fontes carregados antes da captura -----
-    await carregarImagem(fundo);
+    if (item.comImagem) await carregarImagem(fundo);
     await document.fonts.ready;
 
     // Escala idêntica à do index.html para a união combinada
     // (aplica, só durante a captura, as edições temporárias do editor de pré-visualização)
-    return window.__renderPDFCanvas(containerRender, { scale: 3, useCORS: true, backgroundColor: null }, window.__idRenderAtual, 'unir');
+    return window.__renderPDFCanvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null }, window.__idRenderAtual, 'unir');
   };
 
   // ---------- fluxo principal ----------
@@ -3577,12 +3690,13 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    const margin = 10;
-    const maxHeight = pdfHeight - 2 * margin;
-    const halfWidth = (pdfWidth - 3 * margin) / 2;
+    // Sem margens: cada cartaz preenche exatamente metade da folha A4 paisagem (148,5 x 210 mm)
+    const margin = 0;
+    const maxHeight = pdfHeight;
+    const halfWidth = pdfWidth / 2;
 
     const calcSize = (canvas) => {
-      const ratio = Math.min(halfWidth / canvas.width, maxHeight / canvas.height);
+      const ratio = Math.max(halfWidth / canvas.width, maxHeight / canvas.height);
       return { w: canvas.width * ratio, h: canvas.height * ratio };
     };
 
@@ -3597,10 +3711,10 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
       const maiorAltura = size2 ? Math.max(size1.h, size2.h) : size1.h;
       const yOffset = margin + (maxHeight - maiorAltura) / 2;
 
-      pdf.addImage(canvas1.toDataURL('image/png'), 'PNG', margin, yOffset, size1.w, size1.h);
+      pdf.addImage(canvas1.toDataURL('image/png'), 'PNG', (halfWidth - size1.w) / 2, yOffset, size1.w, size1.h);
 
       if (canvas2) {
-        const cartaz2X = pdfWidth - margin - size2.w + 5;
+        const cartaz2X = halfWidth + (halfWidth - size2.w) / 2;
         pdf.addImage(canvas2.toDataURL('image/png'), 'PNG', cartaz2X, yOffset, size2.w, size2.h);
       }
     }
@@ -3623,10 +3737,10 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
 });  
 
 // Ouvinte de evento para juntar TODOS os cartazes selecionados em um ÚNICO arquivo PDF (Uma página por cartaz)
-  document.getElementById('btn-juntar-todos').addEventListener('click', async () => {
+document.getElementById('btn-juntar-todos').addEventListener('click', async () => {
     // Expande cada cartaz conforme a quantidade de cópias informada na tabela
     const selecionados = expandirSelecionadosPorQuantidade();
-    
+
     if (selecionados.length === 0) {
       alert('Por favor, selecione ao menos um cartaz na tabela usando o checkbox para juntar.');
       if (window.__limparOverridesPDF) window.__limparOverridesPDF();
@@ -3659,40 +3773,40 @@ document.getElementById('btn-unir-cartazes').addEventListener('click', async () 
         index++;
         const id = cb.getAttribute('data-id');
         const item = window.listaCartazesMemoria[id];
-        
+
         loadingText.textContent = `Processando cartaz ${index} de ${selecionados.length} para o PDF único...`;
 
         // Remove os colchetes com tipo do produto para renderização do cartaz
-let descricaoLimpa = item.descricaoText || "";
-let tipoEncarteDesc = "";
-if (descricaoLimpa.startsWith("[")) {
-  const indexFechamento = descricaoLimpa.indexOf("]");
-  if (indexFechamento !== -1) {
-    tipoEncarteDesc = descricaoLimpa.substring(1, indexFechamento).trim().toUpperCase();
-    descricaoLimpa = descricaoLimpa.substring(indexFechamento + 1).trim();
-  }
-}
-const descEhOfertaDoDia = (tipoEncarteDesc === 'OFERTA DO DIA');
+        let descricaoLimpa = item.descricaoText || "";
+        let tipoEncarteDesc = "";
+        if (descricaoLimpa.startsWith("[")) {
+          const indexFechamento = descricaoLimpa.indexOf("]");
+          if (indexFechamento !== -1) {
+            tipoEncarteDesc = descricaoLimpa.substring(1, indexFechamento).trim().toUpperCase();
+            descricaoLimpa = descricaoLimpa.substring(indexFechamento + 1).trim();
+          }
+        }
+        const descEhOfertaDoDia = (tipoEncarteDesc === 'OFERTA DO DIA');
 
-dOut.textContent = descricaoLimpa.toUpperCase();
-dOut.style.transform = 'scaleY(1.15)';
+        dOut.textContent = descricaoLimpa.toUpperCase();
+        dOut.style.transform = 'scaleY(1.15)';
 
-if (item.customFontSize && item.customTop) {
-  dOut.style.fontSize = item.customFontSize;
-  dOut.style.top = item.customTop;
-} else {
-  const len = dOut.textContent.length;
+        if (item.customFontSize && item.customTop) {
+          dOut.style.fontSize = item.customFontSize;
+          dOut.style.top = item.customTop;
+        } else {
+          const len = dOut.textContent.length;
 
-  // Faixas: [limite de caracteres, tamanho da fonte]
-  const faixas = descEhOfertaDoDia
-    ? [[10, 55], [15, 50], [25, 45], [30, 43], [35, 40], [Infinity, 35]]
-    : [[10, 70], [15, 65], [25, 55], [35, 45], [Infinity, 30]];
+          // Faixas: [limite de caracteres, tamanho da fonte]
+          const faixas = descEhOfertaDoDia
+            ? [[10, 55], [15, 50], [25, 45], [30, 43], [35, 40], [Infinity, 35]]
+            : [[10, 70], [15, 65], [25, 55], [35, 45], [Infinity, 30]];
 
-  const fontSize = faixas.find(([limite]) => len <= limite)[1];
+          const fontSize = faixas.find(([limite]) => len <= limite)[1];
 
-  dOut.style.fontSize = fontSize + 'px';
-  dOut.style.top = '180px';
-}
+          dOut.style.fontSize = fontSize + 'px';
+          dOut.style.top = '180px';
+        }
 
         const precoOfertaValor = item.precoText || '';
         if (!precoOfertaValor.trim()) {
@@ -3736,16 +3850,11 @@ if (item.customFontSize && item.customTop) {
 
               areaPreco.style.top = '270px';
             } else {
-              pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span> POR:`;   
+              pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatatedAntes}</span> POR:`;
               pAntigoOut.style.display = '';
               pAntigoOut.style.position = 'relative';
               pAntigoOut.style.top = '285px';
-
-              if (charsLeftOfComma === 1) {
-                pAntigoOut.style.right = '0px';
-              } else {
-                pAntigoOut.style.right = '0px';
-              }
+              pAntigoOut.style.right = '0px';
 
               pAntigoOut.style.color = '';
               pAntigoOut.style.fontFamily = '';
@@ -3799,7 +3908,7 @@ if (item.customFontSize && item.customTop) {
             }
           }
         }
-        
+
         rodOut.textContent = novoRodapeTexto;
 
         // --- INÍCIO DA FIDELIDADE VISUAL (APP MODE E OFERTA DO DIA) ---
@@ -3816,7 +3925,10 @@ if (item.customFontSize && item.customTop) {
         const isOfertaDoDia = (encarteAtual === 'OFERTA DO DIA');
         const stackRender = document.getElementById('price-stack-render');
 
-        if (encarteAtual === 'PREÇO NORMAL' || encarteAtual === 'PREÇO NORMAL') {
+        // Só aplica a imagem de fundo se o cartaz foi salvo originalmente com imagem
+        if (!item.comImagem) {
+            cartazRender.style.backgroundImage = 'none';
+        } else if (encarteAtual === 'PREÇO NORMAL') {
             cartazRender.style.backgroundImage = "url('fundo-cartaz-preço-normal.png')";
         } else if (isOfertaDoDia) {
             cartazRender.style.backgroundImage = "url('fundo-ofertadia.png')";
@@ -3826,20 +3938,13 @@ if (item.customFontSize && item.customTop) {
 
         if (isOfertaDoDia) {
             cartazRender.classList.add('oferta-dia-mode');
-            rsOut.textContent = 'R$';
         } else {
             cartazRender.classList.remove('oferta-dia-mode');
-            rsOut.textContent = 'R$';
         }
-
-        const textLength = dOut.textContent.length;
+        rsOut.textContent = 'R$';
 
         if (!item.customFontSize || !item.customTop) {
-            if (isOfertaDoDia) {
-                dOut.style.top = '115px';
-            } else {
-                dOut.style.top = '170px';
-            }
+            dOut.style.top = isOfertaDoDia ? '115px' : '170px';
         }
 
         const precoOfertaVal = item.precoText || '';
@@ -3850,7 +3955,7 @@ if (item.customFontSize && item.customTop) {
             rOut.style.letterSpacing = '5px';
             rOut.style.marginTop = '5px';
             cOut.style.fontSize = '70px';
-            if(stackRender) stackRender.style.marginTop = '5px';
+            if (stackRender) stackRender.style.marginTop = '5px';
             rsOut.style.left = '-20px';
             rsOut.style.fontSize = '42px';
             rOut.style.top = '170px';
@@ -3866,55 +3971,45 @@ if (item.customFontSize && item.customTop) {
             rOut.style.marginTop = '';
             rOut.style.top = '';
             cOut.style.fontSize = '';
-            if(stackRender) stackRender.style.marginTop = '';
+            if (stackRender) stackRender.style.marginTop = '';
             rsOut.style.left = '';
             rsOut.style.marginTop = '';
             rsOut.style.fontSize = '';
         }
 
         const precoAntesVal = item.precoAntigoText || item.precoAntesText || '';
-        if (precoAntesVal.trim()) {
+        const temAntigo = precoAntesVal.trim() !== '';
+
+        if (temAntigo) {
             const vAntes = Number(String(precoAntesVal).replace(/[^0-9,\.]/g, '').replace(',', '.'));
-            const parteInteira = precoOfertaVal.split(',')[0].replace(/\D/g, '');
-            const charsLeftOfComma = parteInteira.length;
-            if (!isNaN(vAntes)) {
+            if (!isNaN(vAntes) && isOfertaDoDia) {
                 const valorFormatadoAntes = vAntes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                if (isOfertaDoDia) {
-                    pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
-                    pAntigoOut.style.color = '#ff0000';
-                    pAntigoOut.style.fontFamily = "'SugoDisplay'";
-                    pAntigoOut.style.fontSize = '30px';
-                    pAntigoOut.style.margin = '5px 0';
-                    if (charsLeftOfComma === 1 || charsLeftOfComma === 2) {
-                        pAntigoOut.style.top = '285px'; 
-                        pAntigoOut.style.right = '0px';
-                        areaPreco.style.top = '265px';
-                    } else {
-                        pAntigoOut.style.top = '285px';
-                        pAntigoOut.style.right = '0px';
-                        pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
-                        areaPreco.style.top = '275px';
-                    }
-                }
+                pAntigoOut.innerHTML = `DE <span class="numeros-riscados">R$ ${valorFormatadoAntes}</span> POR:`;
+                pAntigoOut.style.display = '';
+                pAntigoOut.style.color = '#ff0000';
+                pAntigoOut.style.fontFamily = "'SugoDisplay'";
+                pAntigoOut.style.fontSize = '30px';
+                pAntigoOut.style.margin = '5px 0';
+                pAntigoOut.style.top = '285px';
+                pAntigoOut.style.right = '0px';
             }
         } else {
-            if (isOfertaDoDia) {
-                areaPreco.style.top = '210px';
-            } else {
-                areaPreco.style.top = '290px';
-            }
+            pAntigoOut.style.display = 'none';
         }
+
+        // REGRA ÚNICA da posição da área de preço para OFERTA DO DIA:
+        //  - com preço antigo -> 210px
+        //  - sem preço antigo -> 305px
+        // Demais cartazes mantêm o valor definido no primeiro bloco (265/270px com DE/POR, 290px sem).
+if (!temAntigo) {
+  pAntigoOut.style.display = 'none';
+  areaPreco.style.top = (isOfertaDoDia && !temAntigo)
+    ? '305px'
+    : (isOfertaDoDia ? '210px' : '290px');
+}
+
 
         cadaOut.style.marginLeft = '';
-
-        let dtIni = item.dataInicial || '';
-        let dtFim = item.dataFinal || '';
-        let rodapeDataFim = dtFim;
-        let rodapeDataIni = dtIni;
-        if (typeof inputFim !== 'undefined' && inputFim) {
-            rodapeDataFim = inputFim;
-            rodapeDataIni = inputIni || '';
-        }
 
         if (isOfertaDoDia) {
             // OFERTA DO DIA tem uma data só: lote (inicial ou final) ou a do próprio cartaz
@@ -3930,7 +4025,7 @@ if (item.customFontSize && item.customTop) {
         }
 
         // Aplica, só durante a captura, as edições temporárias do editor de pré-visualização
-        const canvas = await window.__renderPDFCanvas(containerRender, { scale: 3, useCORS: true, backgroundColor: null }, id, 'juntar');
+        const canvas = await window.__renderPDFCanvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null }, id, 'juntar');
 
         // Modo pré-visualização do editor: acumula o canvas real e não monta o PDF
         if (window.__emPreviewPDF) {
@@ -3940,7 +4035,7 @@ if (item.customFontSize && item.customTop) {
 
         const imgData = canvas.toDataURL('image/png');
 
-        if (index === 1) {
+        if (!pdf) {
           pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
         } else {
           pdf.addPage();
@@ -3948,11 +4043,11 @@ if (item.customFontSize && item.customTop) {
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
+        const ratio = Math.max(pdfWidth / canvas.width, pdfHeight / canvas.height); // preenche 100% da A4
         const imgWidth = canvas.width * ratio;
         const imgHeight = canvas.height * ratio;
-        const marginX = ((pdfWidth - imgWidth) / 2) + 3;
-        const marginY = (pdfHeight - imgHeight) / 2 - 5;
+        const marginX = (pdfWidth - imgWidth) / 2;
+        const marginY = (pdfHeight - imgHeight) / 2;
 
         pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
       }
@@ -3978,8 +4073,6 @@ if (item.customFontSize && item.customTop) {
       }
     }
   });
-
-
   // ============================================================
   // MODO ADM - CONTROLE DE FUNÇÕES POR TIPO DE PLACA
   // ============================================================
@@ -4835,19 +4928,19 @@ if (item.customFontSize && item.customTop) {
     let itens = [];
 
     if (fmt === 'unir') {
-      const W = 297, H = 210, margin = 10, maxH = H - 2 * margin, half = (W - 3 * margin) / 2;
-      const calc = (c) => { const r = Math.min(half / c.width, maxH / c.height); return { w: c.width * r, h: c.height * r }; };
+      const W = 297, H = 210, margin = 0, maxH = H, half = W / 2;
+      const calc = (c) => { const r = Math.max(half / c.width, maxH / c.height); return { w: c.width * r, h: c.height * r }; };
       const c1 = res.canvases[0], c2 = res.canvases[1];
       const s1 = calc(c1), s2 = c2 ? calc(c2) : null;
       const yOff = margin + (maxH - (s2 ? Math.max(s1.h, s2.h) : s1.h)) / 2;
-      itens = [{ canvas: c1, x: margin, y: yOff, w: s1.w, h: s1.h, cropX: 0, cropW: W / 2, pageH: H, k: 4 }];
-      if (c2) itens.push({ canvas: c2, x: W - margin - s2.w + 5, y: yOff, w: s2.w, h: s2.h, cropX: W / 2, cropW: W / 2, pageH: H, k: 4 });
+      itens = [{ canvas: c1, x: (half - s1.w) / 2, y: yOff, w: s1.w, h: s1.h, cropX: 0, cropW: W / 2, pageH: H, k: 4 }];
+      if (c2) itens.push({ canvas: c2, x: half + (half - s2.w) / 2, y: yOff, w: s2.w, h: s2.h, cropX: W / 2, cropW: W / 2, pageH: H, k: 4 });
     } else {
       const W = 210, H = 297;
       itens = res.items.map(it => {
-        const ratio = Math.min(W / it.canvas.width, H / it.canvas.height);
+        const ratio = Math.max(W / it.canvas.width, H / it.canvas.height);
         const w = it.canvas.width * ratio, h = it.canvas.height * ratio;
-        return { canvas: it.canvas, x: ((W - w) / 2) + 3, y: ((H - h) / 2) - 5, w, h, cropX: 0, cropW: W, pageH: H, k: 2.9 };
+        return { canvas: it.canvas, x: (W - w) / 2, y: (H - h) / 2, w, h, cropX: 0, cropW: W, pageH: H, k: 2.9 };
       });
     }
 
@@ -5004,10 +5097,10 @@ if (item.customFontSize && item.customTop) {
       const ro = Math.min(cvD.width / o.canvas.width, cvD.height / o.canvas.height);
       const ow = o.canvas.width * ro, oh = o.canvas.height * ro;
       d.drawImage(o.canvas, (cvD.width - ow) / 2, (cvD.height - oh) / 2, ow, oh);
-      const r = Math.min(W / cardCanvas.width, H / cardCanvas.height);
+      const r = Math.max(W / cardCanvas.width, H / cardCanvas.height);
       const w = cardCanvas.width * r, h = cardCanvas.height * r;
       d.globalCompositeOperation = 'difference';
-      d.drawImage(cardCanvas, (((W - w) / 2) + 3) * K, (((H - h) / 2) - 5) * K, w * K, h * K);
+      d.drawImage(cardCanvas, ((W - w) / 2) * K, ((H - h) / 2) * K, w * K, h * K);
       d.fillStyle = '#fff'; d.fillRect(0, 0, cvD.width, cvD.height); // inverte: igual = branco
       d.globalCompositeOperation = 'source-over';
       if (info) {
@@ -5024,9 +5117,9 @@ if (item.customFontSize && item.customTop) {
   // Posição do cartaz dentro da folha A4 retrato (mesma geometria de JUNTAR / SALVAR NOVA DATA)
   function geomA4(card, info, canvasW, hMm) {
     const W = 210;
-    const r = Math.min(W / card.width, hMm / card.height);
+    const r = Math.max(W / card.width, hMm / card.height);
     const w = card.width * r, h = card.height * r, kk = canvasW / W;
-    return { ox: (((W - w) / 2) + 3) * kk, oy: (((hMm - h) / 2) - 5) * kk, f: (w * kk) / info.cardW };
+    return { ox: ((W - w) / 2) * kk, oy: ((hMm - h) / 2) * kk, f: (w * kk) / info.cardW };
   }
   function realce(ctx, x, y, w, h) {
     ctx.save();
