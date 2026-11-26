@@ -9,6 +9,169 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+<script>
+// =====================================================================
+// PDF EM ALTA QUALIDADE (cartaz "texto e imagem")
+// Fundo (logo, título, painel) = PDF VETORIAL (fundo-*.pdf, A4)
+// Texto do cartaz = camada transparente em alta resolução (escala 8, cai para 6 e 4 se preciso)
+// Se o fundo vetorial não puder ser carregado, o sistema usa o método antigo e mostra um aviso.
+// =====================================================================
+(function () {
+  var ESCALAS = [8, 6, 4];
+  var FUNDOS = { padrao: 'fundo-cartaz.pdf', normal: 'fundo-cartaz-preco-normal.pdf', ofertadia: 'fundo-ofertadia.pdf' };
+  var cache = {};
+  var MM = 72 / 25.4;
+
+  function aviso(msg) {
+    console.warn(msg);
+    var d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;background:#b00020;color:#fff;padding:10px 16px;border-radius:8px;font:14px Arial,sans-serif;z-index:2147483000;box-shadow:0 4px 14px rgba(0,0,0,.4)';
+    document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 9000);
+  }
+  function ehPdf(buf) {
+    var u = new Uint8Array(buf, 0, 5);
+    return String.fromCharCode.apply(null, u) === '%PDF-';
+  }
+  function base64ParaBuffer(b64) {
+    var bin = atob(b64), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u.buffer;
+  }
+  function carregarScriptFundos() {
+    return new Promise(function (resolve, reject) {
+      if (window.FUNDOS_PDF_B64) return resolve();
+      var s = document.createElement('script');
+      s.src = 'fundos-vetoriais.js';
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('fundos-vetoriais.js não encontrado')); };
+      document.head.appendChild(s);
+    });
+  }
+  // 1º tenta o .pdf ao lado do HTML; 2º usa fundos-vetoriais.js (funciona até abrindo do disco)
+  async function carregarFundo(chave) {
+    if (cache[chave]) return cache[chave];
+    var buf = null;
+    try {
+      var resp = await fetch(FUNDOS[chave]);
+      if (resp.ok) { var b = await resp.arrayBuffer(); if (ehPdf(b)) buf = b; }
+    } catch (e) { /* segue para o plano B */ }
+    if (!buf) {
+      await carregarScriptFundos();
+      var b64 = window.FUNDOS_PDF_B64 && window.FUNDOS_PDF_B64[chave];
+      if (!b64) throw new Error('Fundo vetorial indisponível: ' + chave);
+      buf = base64ParaBuffer(b64);
+    }
+    cache[chave] = buf;
+    return buf;
+  }
+  function chaveDoFundo(el) {
+    var bg = window.getComputedStyle(el).backgroundImage || '';
+    try { bg = decodeURIComponent(bg); } catch (e) { /* mantém */ }
+    bg = bg.toLowerCase();
+    if (!bg || bg === 'none') return null;
+    if (bg.indexOf('ofertadia') >= 0) return 'ofertadia';
+    if (bg.indexOf('preço-normal') >= 0 || bg.indexOf('preco-normal') >= 0) return 'normal';
+    if (bg.indexOf('fundo-cartaz') >= 0) return 'padrao';
+    return null;
+  }
+
+  // Confere se dá para usar o modo vetorial (chame antes de gerar o PDF real)
+  window.hqPreparar = async function () {
+    try {
+      if (!window.PDFLib) throw new Error('pdf-lib não carregou');
+      await Promise.all(['padrao', 'normal', 'ofertadia'].map(carregarFundo));
+      return true;
+    } catch (e) {
+      aviso('PDF vetorial indisponível, salvando no método antigo (qualidade menor). Motivo: ' + (e && e.message ? e.message : e));
+      return false;
+    }
+  };
+
+  // Captura só o texto do cartaz (fundo escondido). Devolve null se o cartaz não tem imagem de fundo
+  // ou se a captura em alta resolução falhar (o chamador então usa a captura normal).
+  window.hqCapturarCartaz = async function (el, captura) {
+    var chave = chaveDoFundo(el);
+    if (!chave) return null;
+    var props = ['background-image', 'background-color', 'box-shadow'];
+    var salvo = props.map(function (p) { return [p, el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]; });
+    el.style.setProperty('background-image', 'none', 'important');
+    el.style.setProperty('background-color', 'transparent', 'important');
+    el.style.setProperty('box-shadow', 'none', 'important');
+    try {
+      for (var i = 0; i < ESCALAS.length; i++) {
+        try {
+          var c = await captura(ESCALAS[i]);
+          if (!c || !c.width || !c.height) throw new Error('canvas vazio na escala ' + ESCALAS[i]);
+          var blob = await new Promise(function (r) { c.toBlob(r, 'image/png'); });
+          if (!blob) throw new Error('não foi possível gerar o PNG na escala ' + ESCALAS[i]);
+          var png = new Uint8Array(await blob.arrayBuffer());
+          var w = c.width, h = c.height;
+          c.width = 0; c.height = 0; // libera memória
+          return { width: w, height: h, __hqFundo: chave, __hqPng: png };
+        } catch (e) { console.warn('Captura do texto falhou na escala ' + ESCALAS[i] + ':', e); }
+      }
+      aviso('Não foi possível gerar o texto em alta resolução; usando a captura normal.');
+      return null;
+    } finally {
+      salvo.forEach(function (s) { if (s[1]) el.style.setProperty(s[0], s[1], s[2]); else el.style.removeProperty(s[0]); });
+    }
+  };
+
+  // Monta o PDF com pdf-lib. layout: 'retrato' (1 cartaz por página A4) ou 'paisagem2' (2 por página A4 paisagem)
+  window.hqMontarPdf = async function (canvases, layout) {
+    var PDFDocument = window.PDFLib.PDFDocument;
+    var doc = await PDFDocument.create();
+    var emb = {};
+    async function fundoEmbutido(chave) {
+      if (!emb[chave]) { var r = await doc.embedPdf(new Uint8Array(await carregarFundo(chave))); emb[chave] = r[0]; }
+      return emb[chave];
+    }
+    async function pngBytes(c) {
+      if (c.__hqPng) return c.__hqPng;
+      var blob = await new Promise(function (r) { c.toBlob(r, 'image/png'); });
+      return new Uint8Array(await blob.arrayBuffer());
+    }
+    // x e yTop em mm a partir do canto superior esquerdo; w e h em mm
+    async function desenhar(page, c, x, yTop, w, h) {
+      var pageH = page.getHeight();
+      var X = x * MM, W = w * MM, H = h * MM, Y = pageH - yTop * MM - H;
+      if (c.__hqFundo) page.drawPage(await fundoEmbutido(c.__hqFundo), { x: X, y: Y, width: W, height: H });
+      page.drawImage(await doc.embedPng(await pngBytes(c)), { x: X, y: Y, width: W, height: H });
+    }
+    function tamanho(c, boxW, boxH) { var r = Math.max(boxW / c.width, boxH / c.height); return { w: c.width * r, h: c.height * r }; }
+
+    if (layout === 'paisagem2') {
+      var PW = 297, PH = 210, half = PW / 2;
+      for (var i = 0; i < canvases.length; i += 2) {
+        var page = doc.addPage([PW * MM, PH * MM]);
+        var c1 = canvases[i], c2 = canvases[i + 1];
+        var s1 = tamanho(c1, half, PH), s2 = c2 ? tamanho(c2, half, PH) : null;
+        var yOff = (PH - (s2 ? Math.max(s1.h, s2.h) : s1.h)) / 2;
+        await desenhar(page, c1, (half - s1.w) / 2, yOff, s1.w, s1.h);
+        if (c2) await desenhar(page, c2, half + (half - s2.w) / 2, yOff, s2.w, s2.h);
+      }
+    } else {
+      var AW = 210, AH = 297;
+      for (var j = 0; j < canvases.length; j++) {
+        var pg = doc.addPage([AW * MM, AH * MM]);
+        var s = tamanho(canvases[j], AW, AH);
+        await desenhar(pg, canvases[j], (AW - s.w) / 2, (AH - s.h) / 2, s.w, s.h);
+      }
+    }
+    return await doc.save();
+  };
+
+  window.hqBaixar = function (bytes, nome) {
+    var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+  };
+})();
+</script>
 
   <style>
     :root{
@@ -3312,6 +3475,11 @@ if (!temAntigo) {
       // Aplica, só durante a captura, as edições temporárias do editor/comparador
       return window.__renderPDFCanvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null }, window.__idRenderAtual, 'salvar');
     }
+    if (window.__hqAtivo && window.hqCapturarCartaz) {
+      const elHQ = document.getElementById('cartaz-render');
+      const hq = await window.hqCapturarCartaz(elHQ, (escala) => html2canvas(elHQ, { scale: escala, useCORS: true, backgroundColor: null }));
+      if (hq) return hq;
+    }
     return html2canvas(document.getElementById('cartaz-render'), { scale: 3, useCORS: true, backgroundColor: null });
   };
 
@@ -3320,6 +3488,7 @@ if (!temAntigo) {
 
   try {
     const { jsPDF } = window.jspdf;
+    window.__hqAtivo = emPrevia ? false : await window.hqPreparar();
 
     // Prévia: renderiza cada cartaz com as datas do painel (ou, se vazias, com as datas do próprio cartaz)
     if (emPrevia) {
@@ -3360,22 +3529,29 @@ if (!temAntigo) {
       try {
         const canvas = await renderizarCartaz(item);
 
-        const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-        const imgData = canvas.toDataURL('image/png');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        let blobPdf;
+        if (window.__hqAtivo) {
+          // Fundo vetorial + texto em alta resolução
+          blobPdf = new Blob([await window.hqMontarPdf([canvas], 'retrato')], { type: 'application/pdf' });
+        } else {
+          const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+          const imgData = canvas.toDataURL('image/png');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const ratio = Math.max(pdfWidth / canvas.width, pdfHeight / canvas.height); // preenche 100% da A4
-        const imgWidth = canvas.width * ratio;
-        const imgHeight = canvas.height * ratio;
+          const ratio = Math.max(pdfWidth / canvas.width, pdfHeight / canvas.height); // preenche 100% da A4
+          const imgWidth = canvas.width * ratio;
+          const imgHeight = canvas.height * ratio;
 
-        const marginX = (pdfWidth - imgWidth) / 2;
-        const marginY = (pdfHeight - imgHeight) / 2;
+          const marginX = (pdfWidth - imgWidth) / 2;
+          const marginY = (pdfHeight - imgHeight) / 2;
 
-        pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
+          pdf.addImage(imgData, 'PNG', marginX, marginY, imgWidth, imgHeight);
+          blobPdf = pdf.output('blob');
+        }
 
         // Converte o PDF para Base64 e atualiza o Firebase
-        const novaBase64 = await blobToBase64(pdf.output('blob'));
+        const novaBase64 = await blobToBase64(blobPdf);
 
         // OFERTA DO DIA: data única em dataInicial, sem dataFinal e sem rodapé "Oferta válida..."
         const ehDia = parseEncarte(item.descricaoText).encarte === 'OFERTA DO DIA';
@@ -3417,6 +3593,7 @@ if (!temAntigo) {
     console.error(err);
     alert('Ocorreu um erro crítico durante o processamento em lote dos cartazes.');
   } finally {
+    window.__hqAtivo = false;
     loadingOverlay.style.display = 'none';
     if (emPrevia && typeof window.__previewFim === 'function') window.__previewFim();
   }
@@ -3665,6 +3842,7 @@ if (!temAntigo) {
   // ---------- fluxo principal ----------
   try {
     const { jsPDF } = window.jspdf;
+    window.__hqAtivo = window.__emPreviewPDF ? false : await window.hqPreparar();
     const canvases = [];
     const infoCartazes = [];
 
@@ -3681,6 +3859,15 @@ if (!temAntigo) {
       const cbPrev = window.__previewCB;
       window.__previewCB = null;
       if (typeof cbPrev === 'function') cbPrev({ formato: 'unir', canvases });
+      return;
+    }
+
+    // Alta qualidade: fundo vetorial + texto em alta resolução (A4 paisagem, 2 por folha)
+    if (window.__hqAtivo) {
+      const limpaHQ = (t) => (t || '').replace(/\[.*?\]/g, '').trim();
+      const bytesHQ = await window.hqMontarPdf(canvases, 'paisagem2');
+      window.hqBaixar(bytesHQ, sanitizeFileName(limpaHQ(infoCartazes[0].descricaoText) + '-e-' + limpaHQ(infoCartazes[1].descricaoText), 'pdf'));
+      alert('PDF combinado gerado e baixado com sucesso!');
       return;
     }
 
@@ -3727,6 +3914,7 @@ if (!temAntigo) {
     console.error(err);
     alert('Ocorreu um erro ao tentar unir os cartazes selecionados.');
   } finally {
+    window.__hqAtivo = false;
     loadingOverlay.style.display = 'none';
     if (window.__emPreviewPDF) {
       if (typeof window.__previewFim === 'function') window.__previewFim();
@@ -3766,6 +3954,8 @@ document.getElementById('btn-juntar-todos').addEventListener('click', async () =
 
     try {
       const { jsPDF } = window.jspdf;
+      window.__hqAtivo = window.__emPreviewPDF ? false : await window.hqPreparar();
+      const hqPaginas = [];
       let pdf = null;
       let index = 0;
 
@@ -4033,6 +4223,9 @@ if (!temAntigo) {
           continue;
         }
 
+        // Alta qualidade: guarda a camada de texto; o PDF é montado depois, com o fundo vetorial
+        if (window.__hqAtivo) { hqPaginas.push(canvas); continue; }
+
         const imgData = canvas.toDataURL('image/png');
 
         if (!pdf) {
@@ -4059,12 +4252,21 @@ if (!temAntigo) {
         return;
       }
 
+      if (window.__hqAtivo) {
+        loadingText.textContent = 'Montando o PDF vetorial...';
+        const bytesHQ = await window.hqMontarPdf(hqPaginas, 'retrato');
+        window.hqBaixar(bytesHQ, sanitizeFileName('cartazes-unificados', 'pdf'));
+        alert('Todos os cartazes selecionados foram unidos em um único PDF!');
+        return;
+      }
+
       pdf.save(sanitizeFileName('cartazes-unificados', 'pdf'));
       alert('Todos os cartazes selecionados foram unidos em um único PDF!');
     } catch (err) {
       console.error(err);
       alert('Ocorreu um erro ao juntar todos os cartazes.');
     } finally {
+      window.__hqAtivo = false;
       loadingOverlay.style.display = 'none';
       if (window.__emPreviewPDF) {
         if (typeof window.__previewFim === 'function') window.__previewFim();
@@ -4645,6 +4847,11 @@ if (!temAntigo) {
     try {
       const o = Object.assign({}, opts);
       if (window.__emPreviewPDF && window.__previewScale) o.scale = window.__previewScale;
+      // PDF real (não prévia): fundo vetorial + texto em alta resolução quando o cartaz tem imagem de fundo
+      if (window.__hqAtivo && !window.__emPreviewPDF && window.hqCapturarCartaz) {
+        const hq = await window.hqCapturarCartaz(el, (escala) => html2canvas(el, Object.assign({}, o, { scale: escala })));
+        if (hq) return hq;
+      }
       return await html2canvas(el, o);
     } finally {
       if (restaurar) restaurar();
