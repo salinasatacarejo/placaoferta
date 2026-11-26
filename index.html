@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Boogaloo&family=Cal+Sans&family=Gidole&family=Carter+One&family=Protest+Riot&family=Roboto:ital,wght@0,100..900;1,100..900&family=Secular+One&family=Yatra+One&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
   <style>
     :root{
@@ -1793,6 +1794,145 @@ cadaOutput.style.marginBottom = '50px';
     loadingOverlay.style.display = 'none';
   }
 
+
+    // =====================================================================
+    // PDF "TEXTO E IMAGEM" EM ALTA QUALIDADE
+    // Fundo (logo, título, painel) = PDF VETORIAL (fundo-*.pdf, A4)
+    // Texto do cartaz = camada transparente de ~300 dpi (html2canvas escala 6)
+    // Se algo falhar (arquivo do fundo ausente, pdf-lib não carregou...), usa o método antigo.
+    // =====================================================================
+    const HQ_ESCALAS_TEXTO = [8, 6, 4];   // tenta 8x (~400 dpi); se o aparelho não aguentar, cai para 6x e 4x
+    const HQ_FUNDOS_PDF = {
+      padrao:    'fundo-cartaz.pdf',
+      normal:    'fundo-cartaz-preco-normal.pdf',
+      ofertadia: 'fundo-ofertadia.pdf'
+    };
+    const hqCacheFundos = {};
+
+    function hqEscolherFundo(el) {
+      const bg = decodeURIComponent(window.getComputedStyle(el).backgroundImage || '').toLowerCase();
+      if (bg.includes('ofertadia')) return 'ofertadia';
+      if (bg.includes('preço-normal') || bg.includes('preco-normal')) return 'normal';
+      return 'padrao';
+    }
+
+    function hqAviso(msg) {
+      console.warn(msg);
+      const d = document.createElement('div');
+      d.textContent = msg;
+      d.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;background:#b00020;color:#fff;padding:10px 16px;border-radius:8px;font:14px Arial,sans-serif;z-index:20000;box-shadow:0 4px 14px rgba(0,0,0,.4)';
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 9000);
+    }
+
+    function hqBase64ParaBuffer(b64) {
+      const bin = atob(b64); const u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      return u.buffer;
+    }
+    function hqEhPdf(buf) {
+      const u = new Uint8Array(buf, 0, 5);
+      return String.fromCharCode(...u) === '%PDF-';
+    }
+    function hqCarregarScriptFundos() {
+      return new Promise((resolve, reject) => {
+        if (window.FUNDOS_PDF_B64) return resolve();
+        const s = document.createElement('script');
+        s.src = 'fundos-vetoriais.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('fundos-vetoriais.js não encontrado'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // 1º tenta o arquivo .pdf ao lado do index.html; 2º usa fundos-vetoriais.js (funciona até em file://)
+    async function hqCarregarFundo(chave) {
+      if (hqCacheFundos[chave]) return hqCacheFundos[chave];
+      let buf = null;
+      try {
+        const resp = await fetch(HQ_FUNDOS_PDF[chave]);
+        if (resp.ok) { const b = await resp.arrayBuffer(); if (hqEhPdf(b)) buf = b; }
+      } catch (e) { /* segue para o plano B */ }
+      if (!buf) {
+        await hqCarregarScriptFundos();
+        const b64 = window.FUNDOS_PDF_B64 && window.FUNDOS_PDF_B64[chave];
+        if (!b64) throw new Error('Fundo vetorial indisponível: ' + chave);
+        buf = hqBase64ParaBuffer(b64);
+      }
+      hqCacheFundos[chave] = buf;
+      return buf;
+    }
+
+    // Captura só o texto do cartaz (sem a imagem de fundo), com transparência
+    async function hqCapturarTexto(el, escala) {
+      const props = ['background-image', 'background-color', 'box-shadow'];
+      const salvo = props.map(p => [p, el.style.getPropertyValue(p), el.style.getPropertyPriority(p)]);
+      el.style.setProperty('background-image', 'none', 'important');
+      el.style.setProperty('background-color', 'transparent', 'important');
+      el.style.setProperty('box-shadow', 'none', 'important');
+      try {
+        return await html2canvas(el, { scale: escala, useCORS: true, backgroundColor: null });
+      } finally {
+        salvo.forEach(([p, v, pr]) => { if (v) el.style.setProperty(p, v, pr); else el.style.removeProperty(p); });
+      }
+    }
+
+    async function hqGerarPdf(cartazObj) {
+      if (!window.PDFLib) throw new Error('pdf-lib não carregou');
+      const el = cartazObj.cartazCompleto;
+      const fundoBytes = await hqCarregarFundo(hqEscolherFundo(el));
+
+      let pngBytes = null, ultimoErro = null;
+      for (const escala of HQ_ESCALAS_TEXTO) {
+        try {
+          const canvas = await hqCapturarTexto(el, escala);
+          if (!canvas || !canvas.width || !canvas.height) throw new Error('canvas vazio na escala ' + escala);
+          const blobPng = await new Promise(res => canvas.toBlob(res, 'image/png'));
+          if (!blobPng) throw new Error('não foi possível gerar o PNG na escala ' + escala);
+          pngBytes = new Uint8Array(await blobPng.arrayBuffer());
+          break;
+        } catch (e) { ultimoErro = e; console.warn('Captura do texto falhou na escala ' + escala + ':', e); }
+      }
+      if (!pngBytes) throw ultimoErro || new Error('falha ao capturar o texto do cartaz');
+
+      const { PDFDocument } = window.PDFLib;
+      const doc = await PDFDocument.load(new Uint8Array(fundoBytes));
+      const page = doc.getPage(0);
+      const { width, height } = page.getSize();
+      const img = await doc.embedPng(pngBytes);
+      page.drawImage(img, { x: 0, y: 0, width, height });   // texto por cima do fundo vetorial
+      const bytes = await doc.save();
+
+      // Objeto com a mesma interface que o resto do sistema usa do jsPDF (pdf.output('blob'))
+      return {
+        __altaQualidade: true,
+        output(tipo) {
+          const t = String(tipo || 'blob').toLowerCase();
+          if (t === 'arraybuffer') return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+          if (t === 'bloburl' || t === 'bloburi') return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+          return new Blob([bytes], { type: 'application/pdf' });
+        }
+      };
+    }
+
+    // Método antigo (imagem única em 3x) — usado só como plano B
+    async function hqGerarPdfAntigo(cartazObj) {
+      const { jsPDF } = window.jspdf;
+      const canvas = await html2canvas(cartazObj.cartazCompleto, { scale: 3, useCORS: true });
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+      return pdf;
+    }
+
+    async function criarPdfComImagem(cartazObj) {
+      try {
+        return await hqGerarPdf(cartazObj);
+      } catch (erro) {
+        hqAviso('PDF vetorial indisponível, salvando no método antigo (qualidade menor). Motivo: ' + (erro && erro.message ? erro.message : erro));
+        return await hqGerarPdfAntigo(cartazObj);
+      }
+    }
+
     async function saveSingleCartazToList(cartazObj) {
     const encarteAtual = cartazObj.encarteExclusivo || window.opcaoCartazSelecionada || 'GERAL';
     showLoading();
@@ -1854,22 +1994,7 @@ cadaOutput.style.marginBottom = '50px';
     const encarteAtual = cartazObj.encarteExclusivo || window.opcaoCartazSelecionada || 'GERAL';
     showLoading();
     try {
-      const { jsPDF } = window.jspdf;
-
-      const canvas = await html2canvas(cartazObj.cartazCompleto, { scale: 3, useCORS: true });
-
-      const pdf = new jsPDF({
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      // Preenchimento total da folha A4
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const pdf = await criarPdfComImagem(cartazObj);
 
       const currentFontSize = window.getComputedStyle(cartazObj.descricaoOutput).fontSize;
       const currentTop = window.getComputedStyle(cartazObj.descricaoOutput).top;
@@ -1935,24 +2060,18 @@ cadaOutput.style.marginBottom = '50px';
 
       for (const item of cartazesParaSalvar) {
         const cartazObj = item.obj;
-        const canvas = comImagem
-          ? await html2canvas(cartazObj.cartazCompleto, { scale: 3, useCORS: true })
-          : await html2canvas(cartazObj.container, { scale: 3, useCORS: true, backgroundColor: null });
-
-        const pdf = new jsPDF({
-          unit: 'mm',
-          format: 'a4',
-          compress: true
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
+        let pdf;
         if (comImagem) {
-          // Preenchimento total da folha A4
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          // Texto e imagem: fundo vetorial + texto em alta resolução
+          pdf = await criarPdfComImagem(cartazObj);
         } else {
+          const canvas = await html2canvas(cartazObj.container, { scale: 3, useCORS: true, backgroundColor: null });
+          pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+
+          const imgData = canvas.toDataURL('image/png');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+
           const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
           const imgWidth = canvas.width * ratio;
           const imgHeight = canvas.height * ratio;
